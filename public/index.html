@@ -270,24 +270,6 @@
       font-style: italic;
     }
 
-    .unity-status {
-      margin-top: 12px;
-      padding: 8px 12px;
-      border-radius: 6px;
-      font-size: 13px;
-      text-align: center;
-    }
-
-    .unity-connected {
-      background: #d1fae5;
-      color: #065f46;
-    }
-
-    .unity-disconnected {
-      background: #fee2e2;
-      color: #991b1b;
-    }
-
     @media (max-width: 480px) {
       body {
         padding: 12px;
@@ -351,7 +333,6 @@
         </button>
       </div>
       <div id="status" class="status idle">Pronto per iniziare</div>
-      <div id="unityStatus" class="unity-status unity-disconnected">Unity: Disconnesso</div>
     </div>
 
     <div class="transcript-container">
@@ -369,7 +350,6 @@
     
     // Relay server URL
     const RELAY_SERVER_URL = 'wss://agent-app-talk.onrender.com';
-    // Note: Use 'wss://' for secure WebSocket connection
 
     let deepgramSocket;
     let relaySocket;
@@ -388,7 +368,6 @@
     const realtimeMode = document.getElementById('realtimeMode');
     const recordMode = document.getElementById('recordMode');
     const startBtnText = document.getElementById('startBtnText');
-    const unityStatusDiv = document.getElementById('unityStatus');
 
     let finalTranscript = '';
     let interimTranscript = '';
@@ -412,16 +391,25 @@
           try {
             const data = JSON.parse(event.data);
             
-            // Check Unity status
-            if (data.type === 'unity_status') {
-              if (data.connected) {
-                unityStatusDiv.textContent = 'Unity: Connesso ✓';
-                unityStatusDiv.className = 'unity-status unity-connected';
-              } else {
-                unityStatusDiv.textContent = 'Unity: Disconnesso';
-                unityStatusDiv.className = 'unity-status unity-disconnected';
-              }
+            // Handle being kicked out
+            if (data.type === 'kicked_out') {
+              // Stop any recording
+              stopRecording();
+              
+              // Show kick-out message
+              updateStatus(data.message || 'Sei stato disconnesso', 'error');
+              
+              // Disable interface
+              startBtn.disabled = true;
+              realtimeMode.disabled = true;
+              recordMode.disabled = true;
+              
+              // Show alert
+              alert('⚠️ ' + (data.message || 'Un altro utente si è connesso'));
+              
+              return;
             }
+            
           } catch (error) {
             console.error('Error processing relay message:', error);
           }
@@ -429,8 +417,6 @@
 
         relaySocket.onclose = () => {
           console.log('Disconnected from relay server');
-          unityStatusDiv.textContent = 'Unity: Disconnesso';
-          unityStatusDiv.className = 'unity-status unity-disconnected';
           
           // Reconnect after 3 seconds
           setTimeout(connectToRelay, 3000);
