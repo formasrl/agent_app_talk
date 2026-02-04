@@ -2,7 +2,7 @@ const WebSocket = require('ws');
 const express = require('express');
 const path = require('path');
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 5000;
 
 // Create Express app
 const app = express();
@@ -670,7 +670,7 @@ function broadcastAdminStateUpdate() {
 }
 
 // ========== START SERVER ==========
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log('═══════════════════════════════════════════════════════');
   console.log(`🚀 WebSocket Relay Server running on port ${PORT}`);
   console.log('📋 Queue-based conversation management enabled');
