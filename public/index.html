@@ -21,14 +21,68 @@
       color: #333;
     }
 
+    /* ========== LANDING PAGE ========== */
+    #landingPage {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      text-align: center;
+      gap: 40px;
+    }
+
+    #landingPage h1 {
+      font-size: 48px;
+      color: white;
+      text-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
+
+    #landingPage p {
+      font-size: 20px;
+      color: rgba(255, 255, 255, 0.9);
+      max-width: 600px;
+    }
+
+    #connectBtn {
+      padding: 30px 60px;
+      font-size: 28px;
+      font-weight: 700;
+      background: white;
+      color: #667eea;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    #connectBtn:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+      background: #f0f0f0;
+    }
+
+    #connectBtn:active {
+      transform: translateY(-2px);
+    }
+
+    /* ========== MAIN APP (HIDDEN INITIALLY) ========== */
     .container {
       max-width: 600px;
       width: 100%;
       margin: 0 auto;
-      display: flex;
+      display: none; /* Hidden until user clicks connect */
       flex-direction: column;
       gap: 20px;
       flex: 1;
+    }
+
+    .container.active {
+      display: flex;
     }
 
     .header {
@@ -275,6 +329,19 @@
         padding: 12px;
       }
 
+      #landingPage h1 {
+        font-size: 36px;
+      }
+
+      #landingPage p {
+        font-size: 16px;
+      }
+
+      #connectBtn {
+        padding: 20px 40px;
+        font-size: 22px;
+      }
+
       .header h1 {
         font-size: 24px;
       }
@@ -295,7 +362,19 @@
   </style>
 </head>
 <body>
-  <div class="container">
+  <!-- ========== LANDING PAGE ========== -->
+  <div id="landingPage">
+    <div>
+      <h1>🎤 Benvenuto</h1>
+      <p>Clicca il pulsante per iniziare a parlare con l'avatar</p>
+    </div>
+    <button id="connectBtn">
+      Parla con l'Avatar
+    </button>
+  </div>
+
+  <!-- ========== MAIN APP (HIDDEN) ========== -->
+  <div class="container" id="mainApp">
     <div class="header">
       <h1>🎤 Trascrizione in Tempo Reale</h1>
       <p>Powered by Deepgram</p>
@@ -348,7 +427,6 @@
     const DEEPGRAM_API_KEY = '87ce09f5219486e115182b4252e98370723dda2b';
     const DEEPGRAM_URL = 'wss://api.deepgram.com/v1/listen?encoding=linear16&sample_rate=16000&channels=1&language=it&interim_results=true';
     
-    // Relay server URL
     const RELAY_SERVER_URL = 'wss://agent-app-talk.onrender.com';
 
     let deepgramSocket;
@@ -360,6 +438,9 @@
     let audioChunks = [];
     let currentMode = 'realtime';
 
+    const landingPage = document.getElementById('landingPage');
+    const mainApp = document.getElementById('mainApp');
+    const connectBtn = document.getElementById('connectBtn');
     const startBtn = document.getElementById('startBtn');
     const stopBtn = document.getElementById('stopBtn');
     const statusDiv = document.getElementById('status');
@@ -372,6 +453,18 @@
     let finalTranscript = '';
     let interimTranscript = '';
 
+    // ========== "PARLA CON L'AVATAR" BUTTON CLICK ========== 
+    connectBtn.addEventListener('click', () => {
+      // Hide landing page
+      landingPage.style.display = 'none';
+      
+      // Show main app
+      mainApp.classList.add('active');
+      
+      // Connect to relay server
+      connectToRelay();
+    });
+
     // Connect to relay server
     function connectToRelay() {
       try {
@@ -380,7 +473,7 @@
         relaySocket.onopen = () => {
           console.log('Connected to relay server');
           
-          // Identify as web client
+          // Identify as web client - THIS KICKS OUT PREVIOUS USER
           relaySocket.send(JSON.stringify({
             type: 'identify',
             client: 'web'
@@ -393,19 +486,35 @@
             
             // Handle being kicked out
             if (data.type === 'kicked_out') {
-              // Stop any recording
               stopRecording();
               
-              // Show kick-out message
+              // Show error
               updateStatus(data.message || 'Sei stato disconnesso', 'error');
               
-              // Disable interface
+              // Disable everything
               startBtn.disabled = true;
               realtimeMode.disabled = true;
               recordMode.disabled = true;
               
+              // Close relay
+              if (relaySocket) {
+                relaySocket.close();
+                relaySocket = null;
+              }
+              
               // Show alert
               alert('⚠️ ' + (data.message || 'Un altro utente si è connesso'));
+              
+              // Go back to landing page
+              setTimeout(() => {
+                mainApp.classList.remove('active');
+                landingPage.style.display = 'flex';
+                
+                // Re-enable buttons for next time
+                startBtn.disabled = false;
+                realtimeMode.disabled = false;
+                recordMode.disabled = false;
+              }, 2000);
               
               return;
             }
@@ -417,9 +526,7 @@
 
         relaySocket.onclose = () => {
           console.log('Disconnected from relay server');
-          
-          // Reconnect after 3 seconds
-          setTimeout(connectToRelay, 3000);
+          relaySocket = null;
         };
 
         relaySocket.onerror = (error) => {
@@ -427,11 +534,9 @@
         };
       } catch (error) {
         console.error('Failed to connect to relay:', error);
-        setTimeout(connectToRelay, 3000);
       }
     }
 
-    // Send transcription to Unity via relay
     function sendToUnity(text, isFinal) {
       if (relaySocket && relaySocket.readyState === WebSocket.OPEN) {
         const data = {
@@ -445,9 +550,6 @@
         console.log('Relay not connected, cannot send:', text);
       }
     }
-
-    // Initialize relay connection
-    connectToRelay();
 
     realtimeMode.addEventListener('click', () => {
       if (audioStream) return;
@@ -736,7 +838,12 @@
     stopBtn.addEventListener('click', stopRecording);
     clearBtn.addEventListener('click', clearTranscript);
 
-    window.addEventListener('beforeunload', stopRecording);
+    window.addEventListener('beforeunload', () => {
+      stopRecording();
+      if (relaySocket && relaySocket.readyState === WebSocket.OPEN) {
+        relaySocket.close();
+      }
+    });
   </script>
 </body>
 </html>
