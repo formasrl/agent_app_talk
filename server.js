@@ -23,7 +23,7 @@ const wss = new WebSocket.Server({ server });
 
 const clients = new Set();
 const unityClients = new Set();
-const webClients = new Set();
+let activeWebClient = null; // Only ONE web client allowed
 
 wss.on('connection', (ws, req) => {
   console.log('New connection from:', req.socket.remoteAddress);
@@ -40,27 +40,48 @@ wss.on('connection', (ws, req) => {
         clientType = data.client;
         
         if (clientType === 'unity') {
+          // Unity client connected
           unityClients.add(ws);
-          console.log('Unity client connected. Total Unity clients:', unityClients.size);
+          console.log('✅ Unity client connected. Total Unity clients:', unityClients.size);
           
-          // Notify web clients that Unity is connected
-          broadcastToWeb({ type: 'unity_status', connected: true });
         } else {
-          webClients.add(ws);
-          console.log('Web client connected. Total web clients:', webClients.size);
+          // WEB CLIENT - Single user enforcement
           
-          // Notify web client if Unity is connected
-          if (unityClients.size > 0) {
-            ws.send(JSON.stringify({ type: 'unity_status', connected: true }));
+          // If there's already an active web client, kick them out
+          if (activeWebClient && activeWebClient !== ws) {
+            console.log('⚠️ Kicking out previous web client...');
+            
+            try {
+              // Send kick message to old client
+              activeWebClient.send(JSON.stringify({ 
+                type: 'kicked_out',
+                message: 'Un altro utente si è connesso. Sei stato disconnesso.'
+              }));
+              
+              // Close the old connection
+              activeWebClient.close(1000, 'Replaced by new user');
+            } catch (error) {
+              console.error('Error kicking out old client:', error);
+            }
           }
+          
+          // Set new active web client
+          activeWebClient = ws;
+          console.log('✅ New web client connected (previous kicked out if any)');
+          
+          // ⭐ NOTIFY UNITY: New user connected
+          broadcastToUnity({ 
+            type: 'new_user_connected',
+            timestamp: new Date().toISOString()
+          });
         }
         
         clients.add(ws);
         return;
       }
       
-      // Forward transcription data
-      if (data.text) {
+      // Forward transcription data (only from active web client)
+      if (data.text && ws === activeWebClient) {
         console.log(`Transcription [${data.isFinal ? 'FINAL' : 'INTERIM'}]:`, data.text);
         
         // Send to all Unity clients
@@ -76,18 +97,17 @@ wss.on('connection', (ws, req) => {
     clients.delete(ws);
     
     if (unityClients.has(ws)) {
+      // Unity disconnected
       unityClients.delete(ws);
-      console.log('Unity client disconnected. Total Unity clients:', unityClients.size);
-      
-      // Notify web clients if no Unity clients left
-      if (unityClients.size === 0) {
-        broadcastToWeb({ type: 'unity_status', connected: false });
-      }
+      console.log('❌ Unity client disconnected. Total Unity clients:', unityClients.size);
     }
     
-    if (webClients.has(ws)) {
-      webClients.delete(ws);
-      console.log('Web client disconnected. Total web clients:', webClients.size);
+    if (ws === activeWebClient) {
+      // Active web client disconnected
+      activeWebClient = null;
+      console.log('❌ Web client disconnected');
+      
+      // ⭐ NO notification to Unity on disconnect
     }
   });
   
@@ -99,20 +119,16 @@ wss.on('connection', (ws, req) => {
 function broadcastToUnity(data) {
   unityClients.forEach(client => {
     if (client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify(data));
-    }
-  });
-}
-
-function broadcastToWeb(data) {
-  webClients.forEach(client => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify(data));
+      try {
+        client.send(JSON.stringify(data));
+      } catch (error) {
+        console.error('Error sending to Unity:', error);
+      }
     }
   });
 }
 
 server.listen(PORT, () => {
   console.log(`WebSocket Relay Server running on port ${PORT}`);
-  console.log(`Server ready at http://localhost:${PORT}`);
+  console.log(`Server ready - Single user mode enabled`);
 });
