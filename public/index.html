@@ -572,163 +572,186 @@
   </div>
 
   <script>
-    // ========== CONFIGURATION ==========
-    const DEEPGRAM_API_KEY = '87ce09f5219486e115182b4252e98370723dda2b';
-    const DEEPGRAM_URL = 'wss://api.deepgram.com/v1/listen?encoding=linear16&sample_rate=16000&channels=1&language=it&interim_results=true';
-    const RELAY_SERVER_URL = 'wss://agent-app-talk.onrender.com';
+    document.addEventListener('DOMContentLoaded', () => {
+      // ========== CONFIGURATION ==========
+      const DEEPGRAM_API_KEY = '87ce09f5219486e115182b4252e98370723dda2b';
+      const DEEPGRAM_URL = 'wss://api.deepgram.com/v1/listen?encoding=linear16&sample_rate=16000&channels=1&language=it&interim_results=true';
+      const RELAY_SERVER_URL = 'wss://agent-app-talk.onrender.com';
 
-    // ========== STATE ==========
-    let relaySocket = null;
-    let deepgramSocket = null;
-    let audioStream = null;
-    let audioContext = null;
-    let processor = null;
+      // ========== STATE ==========
+      let relaySocket = null;
+      let deepgramSocket = null;
+      let audioStream = null;
+      let audioContext = null;
+      let processor = null;
 
-    let userState = 'disconnected'; // 'disconnected' | 'waiting' | 'active'
-    let conversationActive = false;
-    let isRecording = false;
-    let userId = null;
-    let username = '';
-    let queuePosition = null;
+      let userState = 'disconnected'; // 'disconnected' | 'waiting' | 'active'
+      let conversationActive = false;
+      let isRecording = false;
+      let userId = null;
+      let username = '';
+      let queuePosition = null;
 
-    let finalTranscript = '';
-    let interimTranscript = '';
+      let finalTranscript = '';
+      let interimTranscript = '';
 
-    // ========== DOM ELEMENTS ==========
-    const landingPage = document.getElementById('landingPage');
-    const mainApp = document.getElementById('mainApp');
-    const usernameInput = document.getElementById('usernameInput');
-    const connectBtn = document.getElementById('connectBtn');
-    
-    const userDisplay = document.getElementById('userDisplay');
-    const userIdDisplay = document.getElementById('userIdDisplay');
-    const avatarState = document.getElementById('avatarState');
-    const queueInfo = document.getElementById('queueInfo');
-    const queuePositionSpan = document.getElementById('queuePosition');
-    const activeUserInfo = document.getElementById('activeUserInfo');
-    const activeUsernameSpan = document.getElementById('activeUsername');
-    
-    const startConvBtn = document.getElementById('startConvBtn');
-    const endConvBtn = document.getElementById('endConvBtn');
-    const startRecBtn = document.getElementById('startRecBtn');
-    const stopRecBtn = document.getElementById('stopRecBtn');
-    const leaveQueueBtn = document.getElementById('leaveQueueBtn');
-    const queueControlSection = document.getElementById('queueControlSection');
-    
-    const statusDiv = document.getElementById('status');
-    const transcriptDiv = document.getElementById('transcript');
-    const clearBtn = document.getElementById('clearBtn');
-
-    // ========== USERNAME INPUT ==========
-    usernameInput.addEventListener('input', () => {
-      connectBtn.disabled = usernameInput.value.trim().length === 0;
-    });
-
-    usernameInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter' && !connectBtn.disabled) {
-        connectBtn.click();
-      }
-    });
-
-    // ========== CONNECT BUTTON ==========
-    connectBtn.addEventListener('click', () => {
-      username = usernameInput.value.trim();
-      if (!username) return;
+      // ========== DOM ELEMENTS ==========
+      const landingPage = document.getElementById('landingPage');
+      const mainApp = document.getElementById('mainApp');
+      const usernameInput = document.getElementById('usernameInput');
+      const connectBtn = document.getElementById('connectBtn');
       
-      landingPage.style.display = 'none';
-      mainApp.classList.add('active');
+      const userDisplay = document.getElementById('userDisplay');
+      const userIdDisplay = document.getElementById('userIdDisplay');
+      const avatarState = document.getElementById('avatarState');
+      const queueInfo = document.getElementById('queueInfo');
+      const queuePositionSpan = document.getElementById('queuePosition');
+      const activeUserInfo = document.getElementById('activeUserInfo');
+      const activeUsernameSpan = document.getElementById('activeUsername');
       
-      connectToRelay();
-    });
+      const startConvBtn = document.getElementById('startConvBtn');
+      const endConvBtn = document.getElementById('endConvBtn');
+      const startRecBtn = document.getElementById('startRecBtn');
+      const stopRecBtn = document.getElementById('stopRecBtn');
+      const leaveQueueBtn = document.getElementById('leaveQueueBtn');
+      const queueControlSection = document.getElementById('queueControlSection');
+      
+      const statusDiv = document.getElementById('status');
+      const transcriptDiv = document.getElementById('transcript');
+      const clearBtn = document.getElementById('clearBtn');
 
-    // ========== RELAY CONNECTION ==========
-    function connectToRelay() {
-      try {
-        updateStatus('Connessione al server...', 'connecting');
-        
-        relaySocket = new WebSocket(RELAY_SERVER_URL);
-        
-        relaySocket.onopen = () => {
-          console.log('Connected to relay server');
-          
-          // Identify as web client with username
-          relaySocket.send(JSON.stringify({
-            type: 'identify',
-            client: 'web',
-            username: username
-          }));
-        };
+      // ========== USERNAME INPUT ==========
+      usernameInput.addEventListener('input', () => {
+        connectBtn.disabled = usernameInput.value.trim().length === 0;
+      });
 
-        relaySocket.onmessage = (event) => {
-          handleServerMessage(event.data);
-        };
-
-        relaySocket.onclose = () => {
-          console.log('Disconnected from relay server');
-          handleDisconnection();
-        };
-
-        relaySocket.onerror = (error) => {
-          console.error('Relay server error:', error);
-          updateStatus('Errore di connessione', 'error');
-        };
-        
-      } catch (error) {
-        console.error('Failed to connect to relay:', error);
-        updateStatus('Connessione fallita', 'error');
-      }
-    }
-
-    // ========== SERVER MESSAGE HANDLER ==========
-    function handleServerMessage(data) {
-      try {
-        const message = JSON.parse(data);
-        console.log('Server message:', message);
-        
-        switch (message.type) {
-          case 'registered':
-            handleRegistered(message);
-            break;
-            
-          case 'promoted_to_active':
-            handlePromotedToActive();
-            break;
-            
-          case 'queue_update':
-            handleQueueUpdate(message);
-            break;
-            
-          case 'conversation_started':
-            handleConversationStarted();
-            break;
-            
-          case 'kicked_out':
-            handleKickedOut(message);
-            break;
-            
-          case 'avatar_busy':
-            handleAvatarBusy(message);
-            break;
-            
-          default:
-            console.log('Unknown message type:', message.type);
+      usernameInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !connectBtn.disabled) {
+          connectBtn.click();
         }
-        
-      } catch (error) {
-        console.error('Error processing server message:', error);
-      }
-    }
+      });
 
-    // ========== MESSAGE HANDLERS ==========
-    function handleRegistered(message) {
-      userId = message.userId;
-      userState = message.state;
-      
-      userDisplay.textContent = username;
-      userIdDisplay.textContent = `ID: ${userId}`;
-      
-      if (userState === 'active') {
-        updateStatus('Sei attivo! Puoi iniziare la conversazione', 'active');
+      // ========== CONNECT BUTTON ==========
+      connectBtn.addEventListener('click', () => {
+        username = usernameInput.value.trim();
+        if (!username) return;
+        
+        landingPage.style.display = 'none';
+        mainApp.classList.add('active');
+        
+        connectToRelay();
+      });
+
+      // ========== RELAY CONNECTION ==========
+      function connectToRelay() {
+        try {
+          updateStatus('Connessione al server...', 'connecting');
+          
+          relaySocket = new WebSocket(RELAY_SERVER_URL);
+          
+          relaySocket.onopen = () => {
+            console.log('Connected to relay server');
+            
+            // Identify as web client with username
+            relaySocket.send(JSON.stringify({
+              type: 'identify',
+              client: 'web',
+              username: username
+            }));
+          };
+
+          relaySocket.onmessage = (event) => {
+            handleServerMessage(event.data);
+          };
+
+          relaySocket.onclose = () => {
+            console.log('Disconnected from relay server');
+            handleDisconnection();
+          };
+
+          relaySocket.onerror = (error) => {
+            console.error('Relay server error:', error);
+            updateStatus('Errore di connessione', 'error');
+          };
+          
+        } catch (error) {
+          console.error('Failed to connect to relay:', error);
+          updateStatus('Connessione fallita', 'error');
+        }
+      }
+
+      // ========== SERVER MESSAGE HANDLER ==========
+      function handleServerMessage(data) {
+        try {
+          const message = JSON.parse(data);
+          console.log('Server message:', message);
+          
+          switch (message.type) {
+            case 'registered':
+              handleRegistered(message);
+              break;
+              
+            case 'promoted_to_active':
+              handlePromotedToActive();
+              break;
+              
+            case 'queue_update':
+              handleQueueUpdate(message);
+              break;
+              
+            case 'conversation_started':
+              handleConversationStarted();
+              break;
+              
+            case 'kicked_out':
+              handleKickedOut(message);
+              break;
+              
+            case 'avatar_busy':
+              handleAvatarBusy(message);
+              break;
+              
+            default:
+              console.log('Unknown message type:', message.type);
+          }
+          
+        } catch (error) {
+          console.error('Error processing server message:', error);
+        }
+      }
+
+      // ========== MESSAGE HANDLERS ==========
+      function handleRegistered(message) {
+        userId = message.userId;
+        userState = message.state;
+        
+        userDisplay.textContent = username;
+        userIdDisplay.textContent = `ID: ${userId}`;
+        
+        if (userState === 'active') {
+          updateStatus('Sei attivo! Puoi iniziare la conversazione', 'active');
+          startConvBtn.disabled = false;
+          avatarState.textContent = 'Sei Attivo';
+          avatarState.className = 'avatar-state busy';
+          queueInfo.style.display = 'none';
+          activeUserInfo.style.display = 'none';
+          queueControlSection.style.display = 'none';
+          
+        } else if (userState === 'waiting') {
+          queuePosition = message.queuePosition;
+          updateStatus(`In coda - Posizione: ${queuePosition}`, 'waiting');
+          queuePositionSpan.textContent = queuePosition;
+          queueInfo.style.display = 'block';
+          activeUserInfo.style.display = 'none';
+          avatarState.textContent = 'Avatar Occupato';
+          avatarState.className = 'avatar-state busy';
+          queueControlSection.style.display = 'block';
+        }
+      }
+
+      function handlePromotedToActive() {
+        userState = 'active';
+        updateStatus('✅ Sei stato promosso! Puoi iniziare la conversazione', 'active');
         startConvBtn.disabled = false;
         avatarState.textContent = 'Sei Attivo';
         avatarState.className = 'avatar-state busy';
@@ -736,296 +759,326 @@
         activeUserInfo.style.display = 'none';
         queueControlSection.style.display = 'none';
         
-      } else if (userState === 'waiting') {
-        queuePosition = message.queuePosition;
-        updateStatus(`In coda - Posizione: ${queuePosition}`, 'waiting');
-        queuePositionSpan.textContent = queuePosition;
-        queueInfo.style.display = 'block';
-        activeUserInfo.style.display = 'none';
-        avatarState.textContent = 'Avatar Occupato';
-        avatarState.className = 'avatar-state busy';
-        queueControlSection.style.display = 'block';
-      }
-    }
-
-    function handlePromotedToActive() {
-      userState = 'active';
-      updateStatus('✅ Sei stato promosso! Puoi iniziare la conversazione', 'active');
-      startConvBtn.disabled = false;
-      avatarState.textContent = 'Sei Attivo';
-      avatarState.className = 'avatar-state busy';
-      queueInfo.style.display = 'none';
-      activeUserInfo.style.display = 'none';
-      queueControlSection.style.display = 'none';
-      
-      // Alert user
-      if (document.hidden) {
-        new Notification('Il tuo turno!', {
-          body: 'Puoi iniziare la conversazione con l\'avatar',
-          icon: '🤖'
-        });
-      }
-    }
-
-    function handleQueueUpdate(message) {
-      if (userState === 'waiting') {
-        queuePosition = message.position;
-        queuePositionSpan.textContent = queuePosition;
-        updateStatus(`In coda - Posizione: ${queuePosition} (${message.totalWaiting} in attesa)`, 'waiting');
-      }
-    }
-
-    function handleConversationStarted() {
-      conversationActive = true;
-      startConvBtn.disabled = true;
-      endConvBtn.disabled = false;
-      startRecBtn.disabled = false;
-      updateStatus('Conversazione attiva - Puoi registrare', 'active');
-    }
-
-    function handleKickedOut(message) {
-      stopRecording();
-      updateStatus(message.reason || 'Sei stato disconnesso', 'error');
-      
-      setTimeout(() => {
-        if (relaySocket) {
-          relaySocket.close();
+        // Alert user
+        if (document.hidden) {
+          new Notification('Il tuo turno!', {
+            body: 'Puoi iniziare la conversazione con l\'avatar',
+            icon: '🤖'
+          });
         }
-        returnToLanding();
-      }, 3000);
-    }
-
-    function handleAvatarBusy(message) {
-      activeUsernameSpan.textContent = message.activeUser || 'Sconosciuto';
-      activeUserInfo.style.display = 'block';
-    }
-
-    // ========== CONVERSATION CONTROL ==========
-    startConvBtn.addEventListener('click', () => {
-      if (relaySocket && relaySocket.readyState === WebSocket.OPEN) {
-        relaySocket.send(JSON.stringify({
-          type: 'start_conversation'
-        }));
-        updateStatus('Avvio conversazione...', 'connecting');
       }
-    });
 
-    endConvBtn.addEventListener('click', () => {
-      if (relaySocket && relaySocket.readyState === WebSocket.OPEN) {
-        relaySocket.send(JSON.stringify({
-          type: 'end_conversation'
-        }));
-        
+      function handleQueueUpdate(message) {
+        if (userState === 'waiting') {
+          queuePosition = message.position;
+          queuePositionSpan.textContent = queuePosition;
+          updateStatus(`In coda - Posizione: ${queuePosition} (${message.totalWaiting} in attesa)`, 'waiting');
+        }
+      }
+
+      function handleConversationStarted() {
+        conversationActive = true;
+        startConvBtn.disabled = true;
+        endConvBtn.disabled = false;
+        startRecBtn.disabled = false;
+        updateStatus('Conversazione attiva - Puoi registrare', 'active');
+      }
+
+      function handleKickedOut(message) {
         stopRecording();
-        conversationActive = false;
-        startConvBtn.disabled = false;
-        endConvBtn.disabled = true;
-        startRecBtn.disabled = true;
-        stopRecBtn.disabled = true;
+        updateStatus(message.reason || 'Sei stato disconnesso', 'error');
         
-        updateStatus('Conversazione terminata', 'idle');
-        
-        // Return to landing after delay
         setTimeout(() => {
           if (relaySocket) {
             relaySocket.close();
           }
           returnToLanding();
-        }, 2000);
+        }, 3000);
       }
-    });
 
-    // ========== RECORDING CONTROL ==========
-    startRecBtn.addEventListener('click', async () => {
-      await startRecording();
-    });
+      function handleAvatarBusy(message) {
+        activeUsernameSpan.textContent = message.activeUser || 'Sconosciuto';
+        activeUserInfo.style.display = 'block';
+      }
 
-    stopRecBtn.addEventListener('click', () => {
-      stopRecording();
-    });
-
-    async function startRecording() {
-      try {
-        updateStatus('Richiesta accesso al microfono...', 'connecting');
-        
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          throw new Error('Il tuo browser non supporta l\'accesso al microfono');
+      // ========== CONVERSATION CONTROL ==========
+      startConvBtn.addEventListener('click', () => {
+        if (relaySocket && relaySocket.readyState === WebSocket.OPEN) {
+          relaySocket.send(JSON.stringify({
+            type: 'start_conversation'
+          }));
+          updateStatus('Avvio conversazione...', 'connecting');
         }
+      });
 
-        audioStream = await navigator.mediaDevices.getUserMedia({ 
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true
-          } 
-        });
-
-        updateStatus('Connessione a Deepgram...', 'connecting');
-
-        deepgramSocket = new WebSocket(DEEPGRAM_URL, ['token', DEEPGRAM_API_KEY]);
-
-        deepgramSocket.onopen = () => {
-          updateStatus('🔴 Registrazione in corso...', 'active');
-          isRecording = true;
-          startRecBtn.disabled = true;
-          stopRecBtn.disabled = false;
-          stopRecBtn.classList.add('btn-recording');
-          setupAudioProcessing();
-        };
-
-        deepgramSocket.onmessage = (message) => {
-          const data = JSON.parse(message.data);
+      endConvBtn.addEventListener('click', () => {
+        if (relaySocket && relaySocket.readyState === WebSocket.OPEN) {
+          relaySocket.send(JSON.stringify({
+            type: 'end_conversation'
+          }));
           
-          if (data.type === 'Results') {
-            const transcript = data.channel.alternatives[0].transcript;
-            
-            if (transcript && transcript.trim() !== '') {
-              if (data.is_final) {
-                finalTranscript += transcript + ' ';
-                interimTranscript = '';
-                sendTranscriptionToServer(transcript, true);
-              } else {
-                interimTranscript = transcript;
-                sendTranscriptionToServer(transcript, false);
-              }
-              updateTranscript();
-            }
-          }
-        };
-
-        deepgramSocket.onerror = (error) => {
-          console.error('Deepgram WebSocket error:', error);
-          updateStatus('Errore di connessione Deepgram', 'error');
           stopRecording();
-        };
-
-        deepgramSocket.onclose = () => {
-          console.log('Deepgram connection closed');
-        };
-
-      } catch (error) {
-        handleError(error);
-      }
-    }
-
-    function stopRecording() {
-      if (deepgramSocket) {
-        if (deepgramSocket.readyState === WebSocket.OPEN) {
-          deepgramSocket.close();
-        }
-        deepgramSocket = null;
-      }
-
-      if (processor) {
-        processor.disconnect();
-        processor = null;
-      }
-
-      if (audioContext) {
-        audioContext.close();
-        audioContext = null;
-      }
-
-      if (audioStream) {
-        audioStream.getTracks().forEach(track => track.stop());
-        audioStream = null;
-      }
-
-      isRecording = false;
-      interimTranscript = '';
-      updateTranscript();
-
-      startRecBtn.disabled = false;
-      stopRecBtn.disabled = true;
-      stopRecBtn.classList.remove('btn-recording');
-      
-      if (conversationActive) {
-        updateStatus('Conversazione attiva - Puoi registrare', 'active');
-      }
-    }
-
-    function setupAudioProcessing() {
-      try {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
-        const source = audioContext.createMediaStreamSource(audioStream);
-        
-        processor = audioContext.createScriptProcessor(4096, 1, 1);
-        
-        processor.onaudioprocess = (e) => {
-          if (deepgramSocket && deepgramSocket.readyState === WebSocket.OPEN) {
-            const inputData = e.inputBuffer.getChannelData(0);
-            
-            const int16Data = new Int16Array(inputData.length);
-            for (let i = 0; i < inputData.length; i++) {
-              const s = Math.max(-1, Math.min(1, inputData[i]));
-              int16Data[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+          conversationActive = false;
+          startConvBtn.disabled = false;
+          endConvBtn.disabled = true;
+          startRecBtn.disabled = true;
+          stopRecBtn.disabled = true;
+          
+          updateStatus('Conversazione terminata', 'idle');
+          
+          // Return to landing after delay
+          setTimeout(() => {
+            if (relaySocket) {
+              relaySocket.close();
             }
-            
-            deepgramSocket.send(int16Data.buffer);
+            returnToLanding();
+          }, 2000);
+        }
+      });
+
+      // ========== RECORDING CONTROL ==========
+      startRecBtn.addEventListener('click', async () => {
+        await startRecording();
+      });
+
+      stopRecBtn.addEventListener('click', () => {
+        stopRecording();
+      });
+
+      async function startRecording() {
+        try {
+          updateStatus('Richiesta accesso al microfono...', 'connecting');
+          
+          if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            throw new Error('Il tuo browser non supporta l\'accesso al microfono');
           }
-        };
+
+          audioStream = await navigator.mediaDevices.getUserMedia({ 
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true
+            } 
+          });
+
+          updateStatus('Connessione a Deepgram...', 'connecting');
+
+          deepgramSocket = new WebSocket(DEEPGRAM_URL, ['token', DEEPGRAM_API_KEY]);
+
+          deepgramSocket.onopen = () => {
+            updateStatus('🔴 Registrazione in corso...', 'active');
+            isRecording = true;
+            startRecBtn.disabled = true;
+            stopRecBtn.disabled = false;
+            stopRecBtn.classList.add('btn-recording');
+            setupAudioProcessing();
+          };
+
+          deepgramSocket.onmessage = (message) => {
+            const data = JSON.parse(message.data);
+            
+            if (data.type === 'Results') {
+              const transcript = data.channel.alternatives[0].transcript;
+              
+              if (transcript && transcript.trim() !== '') {
+                if (data.is_final) {
+                  finalTranscript += transcript + ' ';
+                  interimTranscript = '';
+                  sendTranscriptionToServer(transcript, true);
+                } else {
+                  interimTranscript = transcript;
+                  sendTranscriptionToServer(transcript, false);
+                }
+                updateTranscript();
+              }
+            }
+          };
+
+          deepgramSocket.onerror = (error) => {
+            console.error('Deepgram WebSocket error:', error);
+            updateStatus('Errore di connessione Deepgram', 'error');
+            stopRecording();
+          };
+
+          deepgramSocket.onclose = () => {
+            console.log('Deepgram connection closed');
+          };
+
+        } catch (error) {
+          handleError(error);
+        }
+      }
+
+      function stopRecording() {
+        if (deepgramSocket) {
+          if (deepgramSocket.readyState === WebSocket.OPEN) {
+            deepgramSocket.close();
+          }
+          deepgramSocket = null;
+        }
+
+        if (processor) {
+          processor.disconnect();
+          processor = null;
+        }
+
+        if (audioContext) {
+          audioContext.close();
+          audioContext = null;
+        }
+
+        if (audioStream) {
+          audioStream.getTracks().forEach(track => track.stop());
+          audioStream = null;
+        }
+
+        isRecording = false;
+        interimTranscript = '';
+        updateTranscript();
+
+        startRecBtn.disabled = false;
+        stopRecBtn.disabled = true;
+        stopRecBtn.classList.remove('btn-recording');
         
-        source.connect(processor);
-        processor.connect(audioContext.destination);
+        if (conversationActive) {
+          updateStatus('Conversazione attiva - Puoi registrare', 'active');
+        }
+      }
+
+      function setupAudioProcessing() {
+        try {
+          audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+          const source = audioContext.createMediaStreamSource(audioStream);
+          
+          processor = audioContext.createScriptProcessor(4096, 1, 1);
+          
+          processor.onaudioprocess = (e) => {
+            if (deepgramSocket && deepgramSocket.readyState === WebSocket.OPEN) {
+              const inputData = e.inputBuffer.getChannelData(0);
+              
+              const int16Data = new Int16Array(inputData.length);
+              for (let i = 0; i < inputData.length; i++) {
+                const s = Math.max(-1, Math.min(1, inputData[i]));
+                int16Data[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+              }
+              
+              deepgramSocket.send(int16Data.buffer);
+            }
+          };
+          
+          source.connect(processor);
+          processor.connect(audioContext.destination);
+          
+        } catch (error) {
+          console.error('Error setting up audio processing:', error);
+          updateStatus('Errore configurazione audio: ' + error.message, 'error');
+          stopRecording();
+        }
+      }
+
+      // ========== SEND TRANSCRIPTION TO SERVER ==========
+      function sendTranscriptionToServer(text, isFinal) {
+        if (relaySocket && relaySocket.readyState === WebSocket.OPEN) {
+          relaySocket.send(JSON.stringify({
+            type: 'transcription',
+            text: text,
+            isFinal: isFinal,
+            timestamp: new Date().toISOString()
+          }));
+        }
+      }
+
+      // ========== QUEUE CONTROL ==========
+      leaveQueueBtn.addEventListener('click', () => {
+        if (relaySocket && relaySocket.readyState === WebSocket.OPEN) {
+          relaySocket.send(JSON.stringify({
+            type: 'leave_queue'
+          }));
+          
+          relaySocket.close();
+          returnToLanding();
+        }
+      });
+
+      // ========== TRANSCRIPT ==========
+      function updateTranscript() {
+        transcriptDiv.innerHTML = finalTranscript + 
+          (interimTranscript ? `<span class="interim">${interimTranscript}</span>` : '');
+        transcriptDiv.scrollTop = transcriptDiv.scrollHeight;
+      }
+
+      clearBtn.addEventListener('click', () => {
+        finalTranscript = '';
+        interimTranscript = '';
+        updateTranscript();
+      });
+
+      // ========== UTILITY FUNCTIONS ==========
+      function updateStatus(message, type = 'idle') {
+        statusDiv.textContent = message;
+        statusDiv.className = `status ${type}`;
+      }
+
+      function handleError(error) {
+        console.error('Error:', error);
         
-      } catch (error) {
-        console.error('Error setting up audio processing:', error);
-        updateStatus('Errore configurazione audio: ' + error.message, 'error');
+        let errorMessage = 'Errore sconosciuto';
+        
+        if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+          errorMessage = 'Permesso microfono negato. Abilita il microfono nelle impostazioni del browser.';
+        } else if (error.name === 'NotFoundError') {
+          errorMessage = 'Nessun microfono trovato';
+        } else if (error.name === 'NotReadableError') {
+          errorMessage = 'Microfono già in uso da un\'altra applicazione';
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        
+        updateStatus(errorMessage, 'error');
         stopRecording();
       }
-    }
 
-    // ========== SEND TRANSCRIPTION TO SERVER ==========
-    function sendTranscriptionToServer(text, isFinal) {
-      if (relaySocket && relaySocket.readyState === WebSocket.OPEN) {
-        relaySocket.send(JSON.stringify({
-          type: 'transcription',
-          text: text,
-          isFinal: isFinal,
-          timestamp: new Date().toISOString()
-        }));
-      }
-    }
-
-    // ========== QUEUE CONTROL ==========
-    leaveQueueBtn.addEventListener('click', () => {
-      if (relaySocket && relaySocket.readyState === WebSocket.OPEN) {
-        relaySocket.send(JSON.stringify({
-          type: 'leave_queue'
-        }));
+      function handleDisconnection() {
+        stopRecording();
+        updateStatus('Disconnesso dal server', 'error');
         
-        relaySocket.close();
-        returnToLanding();
+        setTimeout(() => {
+          returnToLanding();
+        }, 2000);
+      }
+
+      function returnToLanding() {
+        mainApp.classList.remove('active');
+        landingPage.style.display = 'flex';
+        
+        // Reset state
+        userState = 'disconnected';
+        conversationActive = false;
+        isRecording = false;
+        userId = null;
+        queuePosition = null;
+        finalTranscript = '';
+        interimTranscript = '';
+        
+        // Reset UI
+        usernameInput.value = '';
+        connectBtn.disabled = true;
+        updateStatus('Disconnesso', 'idle');
+      }
+
+      // ========== CLEANUP ==========
+      window.addEventListener('beforeunload', () => {
+        stopRecording();
+        if (relaySocket && relaySocket.readyState === WebSocket.OPEN) {
+          relaySocket.close();
+        }
+      });
+
+      // ========== NOTIFICATIONS ==========
+      if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
       }
     });
-
-    // ========== TRANSCRIPT ==========
-    function updateTranscript() {
-      transcriptDiv.innerHTML = finalTranscript + 
-        (interimTranscript ? `<span class="interim">${interimTranscript}</span>` : '');
-      transcriptDiv.scrollTop = transcriptDiv.scrollHeight;
-    }
-
-    clearBtn.addEventListener('click', () => {
-      finalTranscript = '';
-      interimTranscript = '';
-      updateTranscript();
-    });
-
-    // ========== UTILITY FUNCTIONS ==========
-    function updateStatus(message, type = 'idle') {
-      statusDiv.textContent = message;
-      statusDiv.className = `status ${type}`;
-    }
-
-    function handleError(error) {
-      console.error('Error:', error);
-      
-      let errorMessage = 'Errore sconosciuto';
-      
-      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
-        errorMessage = 'Permesso microfono negato. Abilita il microfono nelle impostazioni del browser.';
-      } else if (error.name === 'NotFoundError') {
-        errorMessage = 'Nessun microfono trovato';
-      } else if (error.name === 'NotReadableError') {
-        errorMessage = 'Microfono già
+  </script>
+</body>
+</html>
