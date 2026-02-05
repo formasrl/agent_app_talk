@@ -247,15 +247,20 @@ wss.on('connection', (ws, req) => {
 
     console.log(`📝 Transcription [${data.isFinal ? 'FINAL' : 'INTERIM'}]: ${data.text}`);
 
-    // Forward to Unity
-    broadcastToUnity({
+    const transcriptionData = {
       type: 'transcription',
       text: data.text,
       isFinal: data.isFinal,
       userId: ws.userId,
       username: ws.username,
       timestamp: data.timestamp || new Date().toISOString()
-    });
+    };
+
+    // Forward to Unity
+    broadcastToUnity(transcriptionData);
+
+    // Forward to Admin clients
+    broadcastToAdmins(transcriptionData);
   }
 
   // ========== END CONVERSATION ==========
@@ -634,6 +639,21 @@ function broadcastToUnity(data) {
   });
 
   console.log('📤 Sent to Unity:', data.type);
+}
+
+// ========== BROADCAST TO ADMINS ==========
+function broadcastToAdmins(data) {
+  adminClients.forEach(admin => {
+    if (admin.readyState === WebSocket.OPEN) {
+      try {
+        admin.send(JSON.stringify(data));
+      } catch (error) {
+        console.error('Error sending to admin:', error);
+      }
+    }
+  });
+
+  console.log('📤 Sent to Admins:', data.type);
 }
 
 // ========== ADMIN STATE UPDATE ==========

@@ -728,7 +728,7 @@
       // ========== CONFIGURATION ==========
       const DEEPGRAM_API_KEY = '87ce09f5219486e115182b4252e98370723dda2b';
       const DEEPGRAM_URL = 'wss://api.deepgram.com/v1/listen?encoding=linear16&sample_rate=16000&channels=1&language=it&interim_results=true';
-      const RELAY_SERVER_URL = 'wss://agent-app-talk.onrender.com';
+      const RELAY_SERVER_URL = `wss://${window.location.host}`;
 
       // ========== STATE ==========
       let relaySocket = null;

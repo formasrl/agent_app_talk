@@ -560,7 +560,7 @@
   <script>
     // ========== CONFIGURATION ==========
     const ADMIN_PASSWORD = 'admin123'; // Change this!
-    const RELAY_SERVER_URL = 'wss://agent-app-talk.onrender.com';
+    const RELAY_SERVER_URL = `wss://${window.location.host}`;
 
     // ========== STATE ==========
     let relaySocket = null;
