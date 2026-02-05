@@ -18,6 +18,20 @@ A queue-based conversation web app with avatar using Deepgram transcription. Thi
 ## Running the App
 The app runs on port 5000 using `npm start`.
 
+## Unity Connection
+Unity clients should connect via WebSocket to the server and identify themselves:
+1. Connect to: `wss://<your-replit-domain>`
+2. Send identify message: `{ "type": "identify", "client": "unity" }`
+3. Server will forward these messages to Unity:
+   - `new_active_user` - When a new user becomes active
+   - `user_left` - When active user leaves
+   - `conversation_started` - When conversation begins
+   - `transcription` - Speech transcription (text, isFinal, userId, username, timestamp)
+   - `queue_status` - Queue updates
+   - `avatar_idle` - When no users are active
+
+Debug endpoint: GET `/status` returns current server state and Unity connection info.
+
 ## Recent Changes
 - February 5, 2026: Complete UI redesign (Mobile-first)
   - Mobile-first design optimized for iOS and Android

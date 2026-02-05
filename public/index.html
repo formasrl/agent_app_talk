@@ -736,6 +736,7 @@
       let audioStream = null;
       let audioContext = null;
       let processor = null;
+      let audioChunks = []; // Buffer for collected audio
 
       let userState = 'disconnected';
       let conversationActive = false;
@@ -964,29 +965,12 @@
             } 
           });
 
-          deepgramSocket = new WebSocket(DEEPGRAM_URL, ['token', DEEPGRAM_API_KEY]);
-
-          deepgramSocket.onopen = () => {
-            isRecording = true;
-            setupAudioProcessing();
-          };
-
-          deepgramSocket.onmessage = (message) => {
-            const data = JSON.parse(message.data);
-            
-            if (data.type === 'Results') {
-              const transcript = data.channel.alternatives[0].transcript;
-              
-              if (transcript && transcript.trim() !== '') {
-                // Send to relay server (for admin panel)
-                sendTranscriptionToServer(transcript, data.is_final);
-              }
-            }
-          };
-
-          deepgramSocket.onerror = () => {
-            stopRecording();
-          };
+          // Clear previous audio chunks
+          audioChunks = [];
+          isRecording = true;
+          
+          // Start collecting audio (don't connect to Deepgram yet)
+          setupAudioProcessing();
 
         } catch (error) {
           handleError(error);
@@ -998,10 +982,8 @@
         talkLabel.classList.remove('recording');
         studioMic.classList.remove('recording');
         
-        if (deepgramSocket) {
-          if (deepgramSocket.readyState === WebSocket.OPEN) deepgramSocket.close();
-          deepgramSocket = null;
-        }
+        const wasRecording = isRecording;
+        isRecording = false;
 
         if (processor) {
           processor.disconnect();
@@ -1018,7 +1000,10 @@
           audioStream = null;
         }
 
-        isRecording = false;
+        // If we were recording and have audio, send to Deepgram
+        if (wasRecording && audioChunks.length > 0) {
+          sendAudioToDeepgram();
+        }
         
         if (conversationActive) {
           talkLabel.textContent = 'Tieni premuto per parlare';
@@ -1033,16 +1018,18 @@
           processor = audioContext.createScriptProcessor(4096, 1, 1);
           
           processor.onaudioprocess = (e) => {
-            if (deepgramSocket && deepgramSocket.readyState === WebSocket.OPEN) {
+            if (isRecording) {
               const inputData = e.inputBuffer.getChannelData(0);
               
+              // Convert to Int16 and store in buffer
               const int16Data = new Int16Array(inputData.length);
               for (let i = 0; i < inputData.length; i++) {
                 const s = Math.max(-1, Math.min(1, inputData[i]));
                 int16Data[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
               }
               
-              deepgramSocket.send(int16Data.buffer);
+              // Collect audio chunks (don't send yet)
+              audioChunks.push(int16Data);
             }
           };
           
@@ -1052,6 +1039,55 @@
         } catch (error) {
           stopRecording();
         }
+      }
+
+      function sendAudioToDeepgram() {
+        // Combine all audio chunks into one buffer
+        const totalLength = audioChunks.reduce((acc, chunk) => acc + chunk.length, 0);
+        const combinedAudio = new Int16Array(totalLength);
+        let offset = 0;
+        for (const chunk of audioChunks) {
+          combinedAudio.set(chunk, offset);
+          offset += chunk.length;
+        }
+        audioChunks = [];
+
+        console.log('Sending complete audio to Deepgram:', combinedAudio.length, 'samples');
+
+        // Connect to Deepgram and send complete audio
+        deepgramSocket = new WebSocket(DEEPGRAM_URL, ['token', DEEPGRAM_API_KEY]);
+
+        deepgramSocket.onopen = () => {
+          // Send the complete audio buffer
+          deepgramSocket.send(combinedAudio.buffer);
+          // Close the stream to signal end of audio
+          deepgramSocket.send(JSON.stringify({ type: 'CloseStream' }));
+        };
+
+        deepgramSocket.onmessage = (message) => {
+          const data = JSON.parse(message.data);
+          
+          if (data.type === 'Results') {
+            const transcript = data.channel.alternatives[0].transcript;
+            
+            if (transcript && transcript.trim() !== '') {
+              // Send to relay server (for admin panel and Unity)
+              sendTranscriptionToServer(transcript, data.is_final);
+            }
+          }
+        };
+
+        deepgramSocket.onerror = (error) => {
+          console.error('Deepgram error:', error);
+          if (deepgramSocket) {
+            deepgramSocket.close();
+            deepgramSocket = null;
+          }
+        };
+
+        deepgramSocket.onclose = () => {
+          deepgramSocket = null;
+        };
       }
 
       function sendTranscriptionToServer(text, isFinal) {

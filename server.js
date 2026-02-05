@@ -15,6 +15,20 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// Status endpoint for debugging Unity connections
+app.get('/status', (req, res) => {
+  res.json({
+    status: 'ok',
+    avatarState: avatarState,
+    activeUser: activeUser ? { userId: activeUser.userId, username: activeUser.username } : null,
+    waitingQueue: waitingQueue.length,
+    unityClients: unityClients.size,
+    adminClients: adminClients.size,
+    wsEndpoint: 'wss://' + req.get('host'),
+    unityProtocol: 'Connect via WebSocket and send: { "type": "identify", "client": "unity" }'
+  });
+});
+
 // Create HTTP server with Express
 const server = require('http').createServer(app);
 
