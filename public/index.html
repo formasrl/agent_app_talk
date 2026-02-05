@@ -2,25 +2,34 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>AI Avatar Assistant</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0a0a0f">
+  <title>AI Avatar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --primary: #6366f1;
       --primary-light: #818cf8;
       --primary-dark: #4f46e5;
-      --accent: #22d3ee;
-      --accent-glow: rgba(34, 211, 238, 0.4);
-      --success: #10b981;
-      --warning: #f59e0b;
-      --danger: #ef4444;
+      --accent: #a5b4fc;
+      --accent-glow: rgba(165, 180, 252, 0.3);
+      --success: #34d399;
+      --warning: #fbbf24;
+      --danger: #f87171;
       --bg-dark: #0a0a0f;
-      --bg-card: rgba(255, 255, 255, 0.03);
-      --bg-glass: rgba(255, 255, 255, 0.05);
-      --border: rgba(255, 255, 255, 0.08);
+      --bg-card: rgba(255, 255, 255, 0.04);
+      --bg-glass: rgba(255, 255, 255, 0.06);
+      --border: rgba(255, 255, 255, 0.1);
       --text: #ffffff;
-      --text-muted: rgba(255, 255, 255, 0.5);
+      --text-secondary: rgba(255, 255, 255, 0.7);
+      --text-muted: rgba(255, 255, 255, 0.4);
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
 
     * {
@@ -28,40 +37,35 @@
       padding: 0;
       box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
     }
 
-    html, body {
+    html {
       height: 100%;
-      overflow: hidden;
+      height: -webkit-fill-available;
     }
 
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
       background: var(--bg-dark);
       color: var(--text);
+      min-height: 100%;
+      min-height: -webkit-fill-available;
       display: flex;
       flex-direction: column;
       user-select: none;
+      -webkit-user-select: none;
+      overflow: hidden;
+      padding-top: var(--safe-top);
+      padding-bottom: var(--safe-bottom);
     }
 
     .bg-gradient {
       position: fixed;
       inset: 0;
       background: 
-        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.3), transparent),
-        radial-gradient(ellipse 60% 40% at 80% 100%, rgba(34, 211, 238, 0.15), transparent),
-        radial-gradient(ellipse 40% 30% at 10% 80%, rgba(139, 92, 246, 0.1), transparent);
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    .grid-overlay {
-      position: fixed;
-      inset: 0;
-      background-image: 
-        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
-      background-size: 60px 60px;
+        radial-gradient(ellipse 100% 60% at 50% -10%, rgba(99, 102, 241, 0.25), transparent 60%),
+        radial-gradient(ellipse 80% 50% at 100% 100%, rgba(139, 92, 246, 0.12), transparent 50%);
       pointer-events: none;
       z-index: 0;
     }
@@ -71,22 +75,24 @@
       inset: 0;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
       z-index: 1;
-      transition: opacity 0.5s ease, transform 0.5s ease;
-      padding: 40px;
+      transition: opacity 0.4s ease, transform 0.4s ease;
+      padding: 24px;
+      padding-top: calc(24px + var(--safe-top));
+      padding-bottom: calc(24px + var(--safe-bottom));
     }
 
     .page.hidden {
       opacity: 0;
       pointer-events: none;
-      transform: scale(0.95);
+      transform: translateY(20px);
     }
 
     /* ========== LANDING PAGE ========== */
     #landingPage {
-      gap: 60px;
+      justify-content: center;
+      align-items: center;
+      gap: 48px;
       text-align: center;
     }
 
@@ -94,479 +100,411 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 24px;
+      gap: 20px;
     }
 
-    .avatar-ring {
-      width: 180px;
-      height: 180px;
+    .avatar-orb {
+      width: 120px;
+      height: 120px;
       border-radius: 50%;
-      background: linear-gradient(135deg, var(--primary), var(--accent));
-      padding: 4px;
-      animation: pulse-ring 3s ease-in-out infinite;
-    }
-
-    @keyframes pulse-ring {
-      0%, 100% { box-shadow: 0 0 0 0 var(--accent-glow), 0 0 60px var(--accent-glow); }
-      50% { box-shadow: 0 0 0 20px transparent, 0 0 80px var(--accent-glow); }
-    }
-
-    .avatar-inner {
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      background: var(--bg-dark);
+      position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 72px;
+    }
+
+    .avatar-orb::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+      opacity: 0.15;
+      animation: orb-pulse 3s ease-in-out infinite;
+    }
+
+    .avatar-orb::after {
+      content: '';
+      position: absolute;
+      inset: 8px;
+      border-radius: 50%;
+      border: 1.5px solid var(--accent);
+      opacity: 0.4;
+    }
+
+    @keyframes orb-pulse {
+      0%, 100% { transform: scale(1); opacity: 0.15; }
+      50% { transform: scale(1.15); opacity: 0.25; }
+    }
+
+    .avatar-icon {
+      width: 48px;
+      height: 48px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .avatar-icon svg {
+      width: 100%;
+      height: 100%;
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
 
     .landing-title {
-      font-size: 56px;
-      font-weight: 800;
-      background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      letter-spacing: -1px;
+      font-size: 32px;
+      font-weight: 600;
+      letter-spacing: -0.5px;
+      color: var(--text);
     }
 
     .landing-subtitle {
-      font-size: 20px;
+      font-size: 15px;
       color: var(--text-muted);
       font-weight: 400;
-      max-width: 500px;
+      line-height: 1.5;
+      max-width: 280px;
     }
 
     .login-form {
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 16px;
       width: 100%;
-      max-width: 400px;
+      max-width: 320px;
     }
 
-    .input-wrapper {
-      position: relative;
-    }
-
-    .input-wrapper input {
+    .input-field {
       width: 100%;
-      padding: 20px 24px;
-      font-size: 18px;
+      padding: 16px 20px;
+      font-size: 16px;
       font-weight: 500;
       background: var(--bg-glass);
       border: 1px solid var(--border);
-      border-radius: 16px;
+      border-radius: 14px;
       color: var(--text);
       outline: none;
-      transition: all 0.3s ease;
+      transition: all 0.2s ease;
     }
 
-    .input-wrapper input::placeholder {
+    .input-field::placeholder {
       color: var(--text-muted);
     }
 
-    .input-wrapper input:focus {
+    .input-field:focus {
       border-color: var(--primary);
-      background: rgba(99, 102, 241, 0.1);
-      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+      background: rgba(99, 102, 241, 0.08);
     }
 
-    .btn-start {
-      padding: 22px 48px;
-      font-size: 18px;
-      font-weight: 700;
-      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    .btn-primary {
+      width: 100%;
+      padding: 16px 24px;
+      font-size: 16px;
+      font-weight: 600;
+      background: var(--primary);
       color: white;
       border: none;
-      border-radius: 16px;
+      border-radius: 14px;
       cursor: pointer;
-      transition: all 0.3s ease;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      position: relative;
-      overflow: hidden;
+      transition: all 0.2s ease;
+      letter-spacing: 0.3px;
     }
 
-    .btn-start::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, var(--primary-light), var(--primary));
-      opacity: 0;
-      transition: opacity 0.3s ease;
+    .btn-primary:active:not(:disabled) {
+      transform: scale(0.98);
+      background: var(--primary-dark);
     }
 
-    .btn-start:hover:not(:disabled)::before {
-      opacity: 1;
-    }
-
-    .btn-start:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 20px 40px rgba(99, 102, 241, 0.4);
-    }
-
-    .btn-start:disabled {
-      opacity: 0.3;
+    .btn-primary:disabled {
+      opacity: 0.35;
       cursor: not-allowed;
-      transform: none;
-    }
-
-    .btn-start span {
-      position: relative;
-      z-index: 1;
     }
 
     /* ========== MAIN APP ========== */
     #mainApp {
-      padding: 30px;
-      gap: 30px;
+      justify-content: space-between;
+      gap: 20px;
     }
 
     .app-header {
-      text-align: center;
-      width: 100%;
+      display: flex;
+      justify-content: center;
+      padding-bottom: 8px;
     }
 
-    .user-badge {
+    .user-chip {
       display: inline-flex;
       align-items: center;
-      gap: 10px;
-      padding: 10px 20px;
+      gap: 8px;
+      padding: 8px 14px;
       background: var(--bg-glass);
       border: 1px solid var(--border);
       border-radius: 100px;
-      font-size: 14px;
-      color: var(--text-muted);
+      font-size: 13px;
+      color: var(--text-secondary);
     }
 
-    .user-badge .name {
-      color: var(--text);
-      font-weight: 600;
-    }
-
-    .status-indicator {
-      width: 8px;
-      height: 8px;
+    .status-dot {
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
       background: var(--success);
-      animation: blink 2s ease-in-out infinite;
     }
 
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
+    .status-dot.waiting { background: var(--warning); }
+    .status-dot.error { background: var(--danger); }
+
+    .user-chip .name {
+      color: var(--text);
+      font-weight: 500;
     }
 
-    .status-indicator.waiting { background: var(--warning); }
-    .status-indicator.error { background: var(--danger); animation: none; }
-
-    /* ========== CONVERSATION AREA ========== */
-    .conversation-area {
+    /* ========== MAIN CONTENT ========== */
+    .main-content {
       flex: 1;
-      width: 100%;
-      max-width: 800px;
       display: flex;
       flex-direction: column;
-      gap: 24px;
+      gap: 16px;
       min-height: 0;
     }
 
-    .avatar-display {
+    .avatar-card {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 16px;
-      padding: 40px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 24px;
-      backdrop-filter: blur(20px);
-    }
-
-    .avatar-display .avatar-ring {
-      width: 120px;
-      height: 120px;
-    }
-
-    .avatar-display .avatar-inner {
-      font-size: 48px;
-    }
-
-    .avatar-status {
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--accent);
-    }
-
-    .avatar-status.busy {
-      color: var(--warning);
-    }
-
-    .queue-banner {
-      display: none;
-      align-items: center;
-      justify-content: center;
       gap: 12px;
-      padding: 16px 24px;
-      background: rgba(245, 158, 11, 0.1);
-      border: 1px solid rgba(245, 158, 11, 0.3);
-      border-radius: 12px;
-      font-size: 15px;
-      color: var(--warning);
-    }
-
-    .queue-banner.visible {
-      display: flex;
-    }
-
-    .queue-position {
-      font-weight: 700;
-      font-size: 24px;
-    }
-
-    /* ========== TRANSCRIPT ========== */
-    .transcript-box {
-      flex: 1;
-      min-height: 150px;
-      max-height: 300px;
-      padding: 24px;
+      padding: 28px 20px;
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: 20px;
-      overflow-y: auto;
-      font-size: 16px;
-      line-height: 1.8;
-      color: rgba(255, 255, 255, 0.85);
     }
 
-    .transcript-box:empty::before {
+    .avatar-card .avatar-orb {
+      width: 80px;
+      height: 80px;
+    }
+
+    .avatar-card .avatar-icon {
+      width: 32px;
+      height: 32px;
+    }
+
+    .avatar-label {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .avatar-label.active {
+      color: var(--success);
+    }
+
+    .avatar-label.busy {
+      color: var(--warning);
+    }
+
+    .transcript-area {
+      flex: 1;
+      min-height: 80px;
+      max-height: 180px;
+      padding: 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow-y: auto;
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .transcript-area:empty::before {
       content: 'La trascrizione apparira qui...';
       color: var(--text-muted);
       font-style: italic;
     }
 
-    .transcript-box .interim {
+    .transcript-area .interim {
       color: var(--accent);
-      opacity: 0.7;
+      opacity: 0.8;
     }
 
-    .transcript-box::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    .transcript-box::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    .transcript-box::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 3px;
-    }
-
-    /* ========== TALK BUTTON ========== */
+    /* ========== TALK SECTION ========== */
     .talk-section {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 16px;
+      gap: 12px;
+      padding: 20px 0;
     }
 
-    .talk-hint {
-      font-size: 14px;
+    .talk-label {
+      font-size: 13px;
       color: var(--text-muted);
-      text-align: center;
+      font-weight: 500;
+      letter-spacing: 0.3px;
     }
 
     .talk-btn {
-      width: 140px;
-      height: 140px;
+      width: 88px;
+      height: 88px;
       border-radius: 50%;
       border: none;
       cursor: pointer;
       position: relative;
-      transition: all 0.2s ease;
-      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-      box-shadow: 0 10px 40px rgba(99, 102, 241, 0.3);
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      box-shadow: 0 8px 32px rgba(99, 102, 241, 0.35);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .talk-btn::before {
       content: '';
       position: absolute;
-      inset: -8px;
+      inset: -4px;
       border-radius: 50%;
-      border: 2px solid var(--primary);
+      border: 1.5px solid var(--primary-light);
       opacity: 0.3;
-      transition: all 0.3s ease;
     }
 
     .talk-btn:disabled {
-      opacity: 0.2;
+      opacity: 0.25;
       cursor: not-allowed;
       box-shadow: none;
     }
 
-    .talk-btn:disabled::before {
-      display: none;
-    }
-
-    .talk-btn:not(:disabled):hover::before {
-      inset: -12px;
-      opacity: 0.5;
+    .talk-btn:active:not(:disabled) {
+      transform: scale(0.95);
     }
 
     .talk-btn.recording {
-      background: linear-gradient(135deg, var(--danger), #dc2626);
-      box-shadow: 0 10px 40px rgba(239, 68, 68, 0.4);
-      transform: scale(1.1);
+      background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
+      box-shadow: 0 8px 32px rgba(248, 113, 113, 0.4);
+      transform: scale(1.08);
     }
 
     .talk-btn.recording::before {
       border-color: var(--danger);
-      animation: recording-pulse 1s ease-in-out infinite;
+      animation: rec-pulse 1s ease-in-out infinite;
     }
 
-    @keyframes recording-pulse {
-      0%, 100% { inset: -8px; opacity: 0.5; }
-      50% { inset: -20px; opacity: 0; }
+    @keyframes rec-pulse {
+      0%, 100% { inset: -4px; opacity: 0.4; }
+      50% { inset: -14px; opacity: 0; }
     }
 
-    .talk-btn-icon {
-      font-size: 48px;
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+    .talk-btn svg {
+      width: 32px;
+      height: 32px;
+      fill: white;
     }
 
-    /* ========== ACTION BUTTONS ========== */
-    .action-row {
+    /* ========== ACTIONS ========== */
+    .action-bar {
       display: flex;
-      gap: 16px;
-      width: 100%;
-      max-width: 500px;
+      gap: 12px;
     }
 
     .action-btn {
       flex: 1;
-      padding: 18px 24px;
-      font-size: 15px;
+      padding: 14px 16px;
+      font-size: 14px;
       font-weight: 600;
       border: none;
-      border-radius: 14px;
+      border-radius: 12px;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.15s ease;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
+      gap: 8px;
     }
 
-    .action-btn.primary {
-      background: linear-gradient(135deg, var(--success), #059669);
+    .action-btn.start {
+      background: var(--success);
       color: white;
     }
 
-    .action-btn.primary:hover:not(:disabled) {
-      box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
-      transform: translateY(-2px);
+    .action-btn.end {
+      background: rgba(248, 113, 113, 0.15);
+      color: var(--danger);
+      border: 1px solid rgba(248, 113, 113, 0.3);
     }
 
-    .action-btn.danger {
-      background: linear-gradient(135deg, var(--danger), #dc2626);
-      color: white;
-    }
-
-    .action-btn.danger:hover:not(:disabled) {
-      box-shadow: 0 10px 30px rgba(239, 68, 68, 0.3);
-      transform: translateY(-2px);
-    }
-
-    .action-btn.secondary {
-      background: var(--bg-glass);
-      border: 1px solid var(--border);
-      color: var(--text);
-    }
-
-    .action-btn.secondary:hover:not(:disabled) {
-      background: rgba(255, 255, 255, 0.1);
+    .action-btn:active:not(:disabled) {
+      transform: scale(0.97);
     }
 
     .action-btn:disabled {
       opacity: 0.3;
       cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
     }
 
-    /* ========== STATUS BAR ========== */
+    /* ========== STATUS ========== */
     .status-bar {
-      width: 100%;
-      max-width: 500px;
-      padding: 14px 20px;
+      padding: 12px 16px;
       background: var(--bg-glass);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 10px;
       text-align: center;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 500;
       color: var(--text-muted);
-      transition: all 0.3s ease;
+      transition: all 0.2s ease;
     }
 
     .status-bar.active {
-      background: rgba(16, 185, 129, 0.1);
-      border-color: rgba(16, 185, 129, 0.3);
+      background: rgba(52, 211, 153, 0.1);
+      border-color: rgba(52, 211, 153, 0.25);
       color: var(--success);
     }
 
     .status-bar.waiting {
-      background: rgba(245, 158, 11, 0.1);
-      border-color: rgba(245, 158, 11, 0.3);
+      background: rgba(251, 191, 36, 0.1);
+      border-color: rgba(251, 191, 36, 0.25);
       color: var(--warning);
     }
 
     .status-bar.error {
-      background: rgba(239, 68, 68, 0.1);
-      border-color: rgba(239, 68, 68, 0.3);
+      background: rgba(248, 113, 113, 0.1);
+      border-color: rgba(248, 113, 113, 0.25);
       color: var(--danger);
     }
 
     .status-bar.recording {
-      background: rgba(239, 68, 68, 0.15);
-      border-color: rgba(239, 68, 68, 0.4);
+      background: rgba(248, 113, 113, 0.12);
+      border-color: rgba(248, 113, 113, 0.3);
       color: var(--danger);
-      animation: status-pulse 1.5s ease-in-out infinite;
     }
 
-    @keyframes status-pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.7; }
-    }
-
-    /* ========== WAITING OVERLAY ========== */
-    .waiting-overlay {
+    /* ========== QUEUE OVERLAY ========== */
+    .queue-overlay {
       display: none;
       position: absolute;
       inset: 0;
-      background: rgba(10, 10, 15, 0.95);
-      backdrop-filter: blur(10px);
+      background: rgba(10, 10, 15, 0.97);
       z-index: 10;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 40px;
+      gap: 32px;
       text-align: center;
-      padding: 40px;
+      padding: 32px;
     }
 
-    .waiting-overlay.visible {
+    .queue-overlay.visible {
       display: flex;
     }
 
-    .waiting-spinner {
-      width: 80px;
-      height: 80px;
-      border: 3px solid var(--border);
+    .queue-spinner {
+      width: 56px;
+      height: 56px;
+      border: 2px solid var(--border);
       border-top-color: var(--accent);
       border-radius: 50%;
       animation: spin 1s linear infinite;
@@ -576,108 +514,126 @@
       to { transform: rotate(360deg); }
     }
 
-    .waiting-title {
-      font-size: 32px;
-      font-weight: 700;
+    .queue-title {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text);
     }
 
-    .waiting-position {
-      font-size: 72px;
-      font-weight: 800;
+    .queue-number {
+      font-size: 56px;
+      font-weight: 700;
       color: var(--accent);
       line-height: 1;
     }
 
-    .waiting-text {
-      font-size: 18px;
+    .queue-desc {
+      font-size: 14px;
       color: var(--text-muted);
+      line-height: 1.6;
+      max-width: 260px;
     }
 
-    .leave-queue-btn {
-      padding: 16px 32px;
-      font-size: 16px;
-      font-weight: 600;
+    .queue-leave-btn {
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 500;
       background: transparent;
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 10px;
       color: var(--text-muted);
       cursor: pointer;
       transition: all 0.2s ease;
     }
 
-    .leave-queue-btn:hover {
+    .queue-leave-btn:active {
       background: rgba(255, 255, 255, 0.05);
-      border-color: var(--danger);
-      color: var(--danger);
     }
 
-    /* ========== RESPONSIVE ========== */
-    @media (max-height: 800px) {
-      .avatar-display {
-        padding: 24px;
+    /* ========== TABLET/DESKTOP ========== */
+    @media (min-width: 600px) {
+      .page {
+        padding: 40px;
+        justify-content: center;
+        align-items: center;
       }
-      .avatar-display .avatar-ring {
-        width: 80px;
-        height: 80px;
-      }
-      .avatar-display .avatar-inner {
-        font-size: 32px;
-      }
-      .talk-btn {
-        width: 120px;
-        height: 120px;
-      }
-      .talk-btn-icon {
-        font-size: 40px;
-      }
-      .transcript-box {
-        min-height: 100px;
-        max-height: 200px;
-      }
-    }
 
-    @media (max-width: 600px) {
-      .landing-title {
-        font-size: 36px;
+      #mainApp {
+        max-width: 480px;
+        width: 100%;
       }
-      .landing-subtitle {
-        font-size: 16px;
-      }
-      .avatar-ring {
+
+      .avatar-orb {
         width: 140px;
         height: 140px;
       }
-      .avatar-inner {
-        font-size: 56px;
+
+      .avatar-icon {
+        width: 56px;
+        height: 56px;
+      }
+
+      .landing-title {
+        font-size: 40px;
+      }
+
+      .landing-subtitle {
+        font-size: 17px;
+        max-width: 360px;
+      }
+
+      .login-form {
+        max-width: 380px;
+      }
+
+      .talk-btn {
+        width: 100px;
+        height: 100px;
+      }
+
+      .talk-btn svg {
+        width: 36px;
+        height: 36px;
       }
     }
   </style>
 </head>
 <body>
   <div class="bg-gradient"></div>
-  <div class="grid-overlay"></div>
 
   <!-- ========== LANDING PAGE ========== -->
   <div id="landingPage" class="page">
     <div class="logo-section">
-      <div class="avatar-ring">
-        <div class="avatar-inner">🤖</div>
+      <div class="avatar-orb">
+        <div class="avatar-icon">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M12 2a10 10 0 0 1 10 10"/>
+            <path d="M12 2a10 10 0 0 0-10 10"/>
+            <path d="M12 22a10 10 0 0 0 10-10"/>
+            <path d="M12 22a10 10 0 0 1-10-10"/>
+            <path d="M2 12h2"/>
+            <path d="M20 12h2"/>
+            <path d="M12 2v2"/>
+            <path d="M12 20v2"/>
+          </svg>
+        </div>
       </div>
       <h1 class="landing-title">AI Avatar</h1>
-      <p class="landing-subtitle">Inserisci il tuo nome per iniziare una conversazione con il nostro assistente virtuale</p>
+      <p class="landing-subtitle">Inserisci il tuo nome per iniziare una conversazione</p>
     </div>
     <form class="login-form" onsubmit="return false;">
-      <div class="input-wrapper">
-        <input 
-          type="text" 
-          id="usernameInput" 
-          placeholder="Il tuo nome"
-          maxlength="30"
-          autocomplete="off"
-        >
-      </div>
-      <button type="submit" id="connectBtn" class="btn-start" disabled>
-        <span>Inizia</span>
+      <input 
+        type="text" 
+        id="usernameInput" 
+        class="input-field"
+        placeholder="Il tuo nome"
+        maxlength="30"
+        autocomplete="off"
+        autocapitalize="words"
+      >
+      <button type="submit" id="connectBtn" class="btn-primary" disabled>
+        Inizia
       </button>
     </form>
   </div>
@@ -685,56 +641,64 @@
   <!-- ========== MAIN APP ========== -->
   <div id="mainApp" class="page hidden">
     <header class="app-header">
-      <div class="user-badge">
-        <div class="status-indicator" id="statusIndicator"></div>
+      <div class="user-chip">
+        <div class="status-dot" id="statusDot"></div>
         <span class="name" id="userDisplay"></span>
-        <span id="userIdDisplay"></span>
       </div>
     </header>
 
-    <div class="conversation-area">
-      <div class="avatar-display">
-        <div class="avatar-ring">
-          <div class="avatar-inner">🤖</div>
+    <div class="main-content">
+      <div class="avatar-card">
+        <div class="avatar-orb">
+          <div class="avatar-icon">
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M12 2a10 10 0 0 1 10 10"/>
+              <path d="M12 2a10 10 0 0 0-10 10"/>
+              <path d="M12 22a10 10 0 0 0 10-10"/>
+              <path d="M12 22a10 10 0 0 1-10-10"/>
+              <path d="M2 12h2"/>
+              <path d="M20 12h2"/>
+              <path d="M12 2v2"/>
+              <path d="M12 20v2"/>
+            </svg>
+          </div>
         </div>
-        <div id="avatarState" class="avatar-status">Pronto</div>
+        <span id="avatarLabel" class="avatar-label">Pronto</span>
       </div>
 
-      <div id="queueBanner" class="queue-banner">
-        <span>Posizione in coda:</span>
-        <span id="queuePosition" class="queue-position">-</span>
-      </div>
-
-      <div id="transcript" class="transcript-box"></div>
+      <div id="transcript" class="transcript-area"></div>
 
       <div class="talk-section">
-        <p class="talk-hint" id="talkHint">Tieni premuto per parlare</p>
+        <span id="talkLabel" class="talk-label">TIENI PREMUTO PER PARLARE</span>
         <button id="talkBtn" class="talk-btn" disabled>
-          <span class="talk-btn-icon">🎤</span>
+          <svg viewBox="0 0 24 24">
+            <path d="M12 1a4 4 0 0 0-4 4v7a4 4 0 0 0 8 0V5a4 4 0 0 0-4-4z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            <line x1="12" y1="19" x2="12" y2="23" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          </svg>
         </button>
       </div>
     </div>
 
-    <div class="action-row">
-      <button id="startConvBtn" class="action-btn primary" disabled>
-        <span>💬</span>
-        <span>Inizia</span>
+    <div class="action-bar">
+      <button id="startConvBtn" class="action-btn start" disabled>
+        Inizia conversazione
       </button>
-      <button id="endConvBtn" class="action-btn danger" disabled>
-        <span>🚪</span>
-        <span>Termina</span>
+      <button id="endConvBtn" class="action-btn end" disabled>
+        Termina
       </button>
     </div>
 
     <div id="status" class="status-bar">Connessione...</div>
 
-    <!-- Waiting Overlay -->
-    <div id="waitingOverlay" class="waiting-overlay">
-      <div class="waiting-spinner"></div>
-      <h2 class="waiting-title">In Attesa</h2>
-      <div class="waiting-position" id="waitingPosition">-</div>
-      <p class="waiting-text">Qualcun altro sta parlando con l'avatar.<br>Sarai notificato quando sara il tuo turno.</p>
-      <button id="leaveQueueBtn" class="leave-queue-btn">Abbandona la coda</button>
+    <!-- Queue Overlay -->
+    <div id="queueOverlay" class="queue-overlay">
+      <div class="queue-spinner"></div>
+      <h2 class="queue-title">In attesa</h2>
+      <div id="queueNumber" class="queue-number">-</div>
+      <p class="queue-desc">Qualcun altro sta parlando. Sarai notificato quando sara il tuo turno.</p>
+      <button id="leaveQueueBtn" class="queue-leave-btn">Abbandona la coda</button>
     </div>
   </div>
 
@@ -769,18 +733,15 @@
       const connectBtn = document.getElementById('connectBtn');
       
       const userDisplay = document.getElementById('userDisplay');
-      const userIdDisplay = document.getElementById('userIdDisplay');
-      const statusIndicator = document.getElementById('statusIndicator');
-      const avatarState = document.getElementById('avatarState');
-      const queueBanner = document.getElementById('queueBanner');
-      const queuePositionSpan = document.getElementById('queuePosition');
-      const waitingOverlay = document.getElementById('waitingOverlay');
-      const waitingPosition = document.getElementById('waitingPosition');
+      const statusDot = document.getElementById('statusDot');
+      const avatarLabel = document.getElementById('avatarLabel');
+      const queueOverlay = document.getElementById('queueOverlay');
+      const queueNumber = document.getElementById('queueNumber');
       
       const startConvBtn = document.getElementById('startConvBtn');
       const endConvBtn = document.getElementById('endConvBtn');
       const talkBtn = document.getElementById('talkBtn');
-      const talkHint = document.getElementById('talkHint');
+      const talkLabel = document.getElementById('talkLabel');
       const leaveQueueBtn = document.getElementById('leaveQueueBtn');
       
       const statusDiv = document.getElementById('status');
@@ -811,13 +772,11 @@
       // ========== RELAY CONNECTION ==========
       function connectToRelay() {
         try {
-          updateStatus('Connessione al server...', 'connecting');
+          updateStatus('Connessione...', 'connecting');
           
           relaySocket = new WebSocket(RELAY_SERVER_URL);
           
           relaySocket.onopen = () => {
-            console.log('Connected to relay server');
-            
             relaySocket.send(JSON.stringify({
               type: 'identify',
               client: 'web',
@@ -830,17 +789,14 @@
           };
 
           relaySocket.onclose = () => {
-            console.log('Disconnected from relay server');
             handleDisconnection();
           };
 
           relaySocket.onerror = (error) => {
-            console.error('Relay server error:', error);
             updateStatus('Errore di connessione', 'error');
           };
           
         } catch (error) {
-          console.error('Failed to connect to relay:', error);
           updateStatus('Connessione fallita', 'error');
         }
       }
@@ -849,39 +805,29 @@
       function handleServerMessage(data) {
         try {
           const message = JSON.parse(data);
-          console.log('Server message:', message);
           
           switch (message.type) {
             case 'registered':
               handleRegistered(message);
               break;
-              
             case 'promoted_to_active':
               handlePromotedToActive();
               break;
-              
             case 'queue_update':
               handleQueueUpdate(message);
               break;
-              
             case 'conversation_started':
               handleConversationStarted();
               break;
-              
             case 'kicked_out':
               handleKickedOut(message);
               break;
-              
             case 'avatar_busy':
               handleAvatarBusy(message);
               break;
-              
-            default:
-              console.log('Unknown message type:', message.type);
           }
-          
         } catch (error) {
-          console.error('Error processing server message:', error);
+          console.error('Error:', error);
         }
       }
 
@@ -891,52 +837,51 @@
         userState = message.state;
         
         userDisplay.textContent = username;
-        userIdDisplay.textContent = userId;
         
         if (userState === 'active') {
-          updateStatus('Sei attivo! Premi "Inizia" per cominciare', 'active');
+          updateStatus('Premi "Inizia conversazione"', 'active');
           startConvBtn.disabled = false;
-          avatarState.textContent = 'Pronto per te';
-          avatarState.classList.remove('busy');
-          waitingOverlay.classList.remove('visible');
-          queueBanner.classList.remove('visible');
-          statusIndicator.classList.remove('waiting', 'error');
+          avatarLabel.textContent = 'Pronto';
+          avatarLabel.className = 'avatar-label active';
+          queueOverlay.classList.remove('visible');
+          statusDot.className = 'status-dot';
           
         } else if (userState === 'waiting') {
           queuePosition = message.queuePosition;
-          updateStatus(`In coda - Posizione: ${queuePosition}`, 'waiting');
-          queuePositionSpan.textContent = queuePosition;
-          waitingPosition.textContent = queuePosition;
-          waitingOverlay.classList.add('visible');
-          avatarState.textContent = 'Occupato';
-          avatarState.classList.add('busy');
-          statusIndicator.classList.add('waiting');
+          updateStatus('In coda: posizione ' + queuePosition, 'waiting');
+          queueNumber.textContent = queuePosition;
+          queueOverlay.classList.add('visible');
+          avatarLabel.textContent = 'Occupato';
+          avatarLabel.className = 'avatar-label busy';
+          statusDot.className = 'status-dot waiting';
         }
       }
 
       function handlePromotedToActive() {
         userState = 'active';
-        updateStatus('E il tuo turno! Premi "Inizia" per cominciare', 'active');
+        updateStatus('E il tuo turno!', 'active');
         startConvBtn.disabled = false;
-        avatarState.textContent = 'Pronto per te';
-        avatarState.classList.remove('busy');
-        waitingOverlay.classList.remove('visible');
-        queueBanner.classList.remove('visible');
-        statusIndicator.classList.remove('waiting', 'error');
+        avatarLabel.textContent = 'Pronto';
+        avatarLabel.className = 'avatar-label active';
+        queueOverlay.classList.remove('visible');
+        statusDot.className = 'status-dot';
         
         if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
           new Notification('E il tuo turno!', {
-            body: 'Puoi iniziare la conversazione con l\'avatar'
+            body: 'Puoi iniziare la conversazione'
           });
+        }
+        
+        if ('vibrate' in navigator) {
+          navigator.vibrate([100, 50, 100]);
         }
       }
 
       function handleQueueUpdate(message) {
         if (userState === 'waiting') {
           queuePosition = message.position;
-          queuePositionSpan.textContent = queuePosition;
-          waitingPosition.textContent = queuePosition;
-          updateStatus(`In coda - Posizione: ${queuePosition}`, 'waiting');
+          queueNumber.textContent = queuePosition;
+          updateStatus('In coda: posizione ' + queuePosition, 'waiting');
         }
       }
 
@@ -945,44 +890,38 @@
         startConvBtn.disabled = true;
         endConvBtn.disabled = false;
         talkBtn.disabled = false;
-        talkHint.textContent = 'Tieni premuto per parlare';
-        avatarState.textContent = 'Ti ascolto';
-        updateStatus('Conversazione attiva - Tieni premuto il microfono per parlare', 'active');
+        talkLabel.textContent = 'TIENI PREMUTO PER PARLARE';
+        avatarLabel.textContent = 'Ti ascolto';
+        updateStatus('Tieni premuto il microfono', 'active');
       }
 
       function handleKickedOut(message) {
         stopRecording();
-        updateStatus(message.reason || 'Sei stato disconnesso', 'error');
-        statusIndicator.classList.add('error');
+        updateStatus(message.reason || 'Disconnesso', 'error');
+        statusDot.className = 'status-dot error';
         
         setTimeout(() => {
-          if (relaySocket) {
-            relaySocket.close();
-          }
+          if (relaySocket) relaySocket.close();
           returnToLanding();
-        }, 3000);
+        }, 2500);
       }
 
       function handleAvatarBusy(message) {
-        avatarState.textContent = 'Occupato';
-        avatarState.classList.add('busy');
+        avatarLabel.textContent = 'Occupato';
+        avatarLabel.className = 'avatar-label busy';
       }
 
       // ========== CONVERSATION CONTROL ==========
       startConvBtn.addEventListener('click', () => {
         if (relaySocket && relaySocket.readyState === WebSocket.OPEN) {
-          relaySocket.send(JSON.stringify({
-            type: 'start_conversation'
-          }));
-          updateStatus('Avvio conversazione...', 'connecting');
+          relaySocket.send(JSON.stringify({ type: 'start_conversation' }));
+          updateStatus('Avvio...', 'connecting');
         }
       });
 
       endConvBtn.addEventListener('click', () => {
         if (relaySocket && relaySocket.readyState === WebSocket.OPEN) {
-          relaySocket.send(JSON.stringify({
-            type: 'end_conversation'
-          }));
+          relaySocket.send(JSON.stringify({ type: 'end_conversation' }));
           
           stopRecording();
           conversationActive = false;
@@ -993,21 +932,20 @@
           updateStatus('Conversazione terminata', 'idle');
           
           setTimeout(() => {
-            if (relaySocket) {
-              relaySocket.close();
-            }
+            if (relaySocket) relaySocket.close();
             returnToLanding();
-          }, 2000);
+          }, 1500);
         }
       });
 
-      // ========== HOLD-TO-TALK RECORDING ==========
+      // ========== HOLD-TO-TALK ==========
       let isHolding = false;
 
       function handleTalkStart(e) {
         e.preventDefault();
         if (talkBtn.disabled || isHolding) return;
         isHolding = true;
+        if ('vibrate' in navigator) navigator.vibrate(30);
         startRecording();
       }
 
@@ -1018,27 +956,24 @@
         stopRecording();
       }
 
-      // Mouse events
       talkBtn.addEventListener('mousedown', handleTalkStart);
       talkBtn.addEventListener('mouseup', handleTalkEnd);
       talkBtn.addEventListener('mouseleave', handleTalkEnd);
 
-      // Touch events
       talkBtn.addEventListener('touchstart', handleTalkStart, { passive: false });
       talkBtn.addEventListener('touchend', handleTalkEnd, { passive: false });
       talkBtn.addEventListener('touchcancel', handleTalkEnd, { passive: false });
 
-      // Prevent context menu on long press
       talkBtn.addEventListener('contextmenu', (e) => e.preventDefault());
 
       async function startRecording() {
         try {
           talkBtn.classList.add('recording');
-          talkHint.textContent = 'Rilascia per inviare';
-          updateStatus('Registrazione in corso...', 'recording');
+          talkLabel.textContent = 'RILASCIA PER INVIARE';
+          updateStatus('Registrazione...', 'recording');
           
           if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            throw new Error('Il tuo browser non supporta l\'accesso al microfono');
+            throw new Error('Microfono non supportato');
           }
 
           audioStream = await navigator.mediaDevices.getUserMedia({ 
@@ -1076,14 +1011,9 @@
             }
           };
 
-          deepgramSocket.onerror = (error) => {
-            console.error('Deepgram WebSocket error:', error);
-            updateStatus('Errore di connessione', 'error');
+          deepgramSocket.onerror = () => {
+            updateStatus('Errore connessione', 'error');
             stopRecording();
-          };
-
-          deepgramSocket.onclose = () => {
-            console.log('Deepgram connection closed');
           };
 
         } catch (error) {
@@ -1095,9 +1025,7 @@
         talkBtn.classList.remove('recording');
         
         if (deepgramSocket) {
-          if (deepgramSocket.readyState === WebSocket.OPEN) {
-            deepgramSocket.close();
-          }
+          if (deepgramSocket.readyState === WebSocket.OPEN) deepgramSocket.close();
           deepgramSocket = null;
         }
 
@@ -1121,8 +1049,8 @@
         updateTranscript();
         
         if (conversationActive) {
-          talkHint.textContent = 'Tieni premuto per parlare';
-          updateStatus('Conversazione attiva - Tieni premuto il microfono per parlare', 'active');
+          talkLabel.textContent = 'TIENI PREMUTO PER PARLARE';
+          updateStatus('Tieni premuto il microfono', 'active');
         }
       }
 
@@ -1151,13 +1079,11 @@
           processor.connect(audioContext.destination);
           
         } catch (error) {
-          console.error('Error setting up audio processing:', error);
-          updateStatus('Errore configurazione audio: ' + error.message, 'error');
+          updateStatus('Errore audio', 'error');
           stopRecording();
         }
       }
 
-      // ========== SEND TRANSCRIPTION TO SERVER ==========
       function sendTranscriptionToServer(text, isFinal) {
         if (relaySocket && relaySocket.readyState === WebSocket.OPEN) {
           relaySocket.send(JSON.stringify({
@@ -1172,10 +1098,7 @@
       // ========== QUEUE CONTROL ==========
       leaveQueueBtn.addEventListener('click', () => {
         if (relaySocket && relaySocket.readyState === WebSocket.OPEN) {
-          relaySocket.send(JSON.stringify({
-            type: 'leave_queue'
-          }));
-          
+          relaySocket.send(JSON.stringify({ type: 'leave_queue' }));
           relaySocket.close();
           returnToLanding();
         }
@@ -1184,43 +1107,33 @@
       // ========== TRANSCRIPT ==========
       function updateTranscript() {
         transcriptDiv.innerHTML = finalTranscript + 
-          (interimTranscript ? `<span class="interim">${interimTranscript}</span>` : '');
+          (interimTranscript ? '<span class="interim">' + interimTranscript + '</span>' : '');
         transcriptDiv.scrollTop = transcriptDiv.scrollHeight;
       }
 
-      // ========== UTILITY FUNCTIONS ==========
+      // ========== UTILITY ==========
       function updateStatus(message, type = 'idle') {
         statusDiv.textContent = message;
-        statusDiv.className = `status-bar ${type}`;
+        statusDiv.className = 'status-bar ' + type;
       }
 
       function handleError(error) {
-        console.error('Error:', error);
+        let msg = 'Errore';
+        if (error.name === 'NotAllowedError') msg = 'Permesso microfono negato';
+        else if (error.name === 'NotFoundError') msg = 'Microfono non trovato';
+        else if (error.name === 'NotReadableError') msg = 'Microfono in uso';
+        else if (error.message) msg = error.message;
         
-        let errorMessage = 'Errore sconosciuto';
-        
-        if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
-          errorMessage = 'Permesso microfono negato. Abilita il microfono nelle impostazioni.';
-        } else if (error.name === 'NotFoundError') {
-          errorMessage = 'Nessun microfono trovato';
-        } else if (error.name === 'NotReadableError') {
-          errorMessage = 'Microfono gia in uso';
-        } else if (error.message) {
-          errorMessage = error.message;
-        }
-        
-        updateStatus(errorMessage, 'error');
+        updateStatus(msg, 'error');
         stopRecording();
       }
 
       function handleDisconnection() {
         stopRecording();
-        updateStatus('Disconnesso dal server', 'error');
-        statusIndicator.classList.add('error');
+        updateStatus('Disconnesso', 'error');
+        statusDot.className = 'status-dot error';
         
-        setTimeout(() => {
-          returnToLanding();
-        }, 2000);
+        setTimeout(() => returnToLanding(), 1500);
       }
 
       function returnToLanding() {
@@ -1240,7 +1153,7 @@
         startConvBtn.disabled = true;
         endConvBtn.disabled = true;
         talkBtn.disabled = true;
-        waitingOverlay.classList.remove('visible');
+        queueOverlay.classList.remove('visible');
         transcriptDiv.innerHTML = '';
         updateStatus('Disconnesso', 'idle');
       }
@@ -1248,9 +1161,7 @@
       // ========== CLEANUP ==========
       window.addEventListener('beforeunload', () => {
         stopRecording();
-        if (relaySocket && relaySocket.readyState === WebSocket.OPEN) {
-          relaySocket.close();
-        }
+        if (relaySocket && relaySocket.readyState === WebSocket.OPEN) relaySocket.close();
       });
 
       // ========== NOTIFICATIONS ==========
