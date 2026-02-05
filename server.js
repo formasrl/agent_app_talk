@@ -66,8 +66,10 @@ wss.on('connection', (ws, req) => {
 
   ws.on('message', (message) => {
     try {
-      const data = JSON.parse(message);
-      console.log('Received:', data.type, data);
+      const rawMessage = message.toString();
+      console.log('📨 Raw message received:', rawMessage);
+      const data = JSON.parse(rawMessage);
+      console.log('📨 Parsed:', data.type, '| Client type:', clientType || 'not yet identified');
 
       switch (data.type) {
         case 'identify':
@@ -124,7 +126,18 @@ wss.on('connection', (ws, req) => {
       // Unity client
       unityClients.add(ws);
       ws.clientType = 'unity';
-      console.log('✅ Unity client connected. Total Unity clients:', unityClients.size);
+      console.log('═══════════════════════════════════════════════════════');
+      console.log('✅ UNITY CLIENT CONNECTED!');
+      console.log('   Total Unity clients:', unityClients.size);
+      console.log('═══════════════════════════════════════════════════════');
+      
+      // Send confirmation to Unity
+      sendToClient(ws, {
+        type: 'connection_confirmed',
+        message: 'Unity client registered successfully',
+        timestamp: new Date().toISOString()
+      });
+      
       broadcastAdminStateUpdate();
 
     } else if (clientType === 'admin') {
@@ -183,9 +196,18 @@ wss.on('connection', (ws, req) => {
       state: 'active'
     });
 
-    // Notify Unity
-    broadcastToUnity({
+    // Notify Unity (send both message types for compatibility)
+    const unityNewUserMsg = {
       type: 'new_active_user',
+      userId: ws.userId,
+      username: ws.username,
+      timestamp: new Date().toISOString()
+    };
+    broadcastToUnity(unityNewUserMsg);
+    
+    // Also send legacy format Unity might expect
+    broadcastToUnity({
+      type: 'new_user_connected',
       userId: ws.userId,
       username: ws.username,
       timestamp: new Date().toISOString()
@@ -594,9 +616,17 @@ function promoteNextUser() {
       type: 'promoted_to_active'
     });
 
-    // Notify Unity
+    // Notify Unity (send both message types for compatibility)
     broadcastToUnity({
       type: 'new_active_user',
+      userId: nextUser.userId,
+      username: nextUser.username,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Also send legacy format Unity might expect
+    broadcastToUnity({
+      type: 'new_user_connected',
       userId: nextUser.userId,
       username: nextUser.username,
       timestamp: new Date().toISOString()
