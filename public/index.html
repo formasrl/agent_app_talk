@@ -3,571 +3,738 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Conversazione con Avatar</title>
+  <title>AI Avatar Assistant</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --primary: #6366f1;
+      --primary-light: #818cf8;
+      --primary-dark: #4f46e5;
+      --accent: #22d3ee;
+      --accent-glow: rgba(34, 211, 238, 0.4);
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --bg-dark: #0a0a0f;
+      --bg-card: rgba(255, 255, 255, 0.03);
+      --bg-glass: rgba(255, 255, 255, 0.05);
+      --border: rgba(255, 255, 255, 0.08);
+      --text: #ffffff;
+      --text-muted: rgba(255, 255, 255, 0.5);
+    }
+
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background: linear-gradient(135deg, #1a2332 0%, #2d4a5c 100%);
-      min-height: 100vh;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text);
       display: flex;
       flex-direction: column;
-      padding: 20px;
-      color: #333;
+      user-select: none;
     }
 
-    /* ========== LANDING PAGE ========== */
-    #landingPage {
+    .bg-gradient {
+      position: fixed;
+      inset: 0;
+      background: 
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.3), transparent),
+        radial-gradient(ellipse 60% 40% at 80% 100%, rgba(34, 211, 238, 0.15), transparent),
+        radial-gradient(ellipse 40% 30% at 10% 80%, rgba(139, 92, 246, 0.1), transparent);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .grid-overlay {
+      position: fixed;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .page {
+      position: absolute;
+      inset: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
+      z-index: 1;
+      transition: opacity 0.5s ease, transform 0.5s ease;
+      padding: 40px;
+    }
+
+    .page.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.95);
+    }
+
+    /* ========== LANDING PAGE ========== */
+    #landingPage {
+      gap: 60px;
       text-align: center;
-      gap: 40px;
     }
 
-    #landingPage h1 {
-      font-size: 48px;
-      color: #00d9ff;
-      text-shadow: 0 0 20px rgba(0, 217, 255, 0.5);
-      margin-bottom: 20px;
-    }
-
-    #landingPage p {
-      font-size: 20px;
-      color: rgba(255, 255, 255, 0.9);
-      max-width: 600px;
-    }
-
-    .username-input {
+    .logo-section {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .avatar-ring {
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      padding: 4px;
+      animation: pulse-ring 3s ease-in-out infinite;
+    }
+
+    @keyframes pulse-ring {
+      0%, 100% { box-shadow: 0 0 0 0 var(--accent-glow), 0 0 60px var(--accent-glow); }
+      50% { box-shadow: 0 0 0 20px transparent, 0 0 80px var(--accent-glow); }
+    }
+
+    .avatar-inner {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: var(--bg-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 72px;
+    }
+
+    .landing-title {
+      font-size: 56px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -1px;
+    }
+
+    .landing-subtitle {
+      font-size: 20px;
+      color: var(--text-muted);
+      font-weight: 400;
+      max-width: 500px;
+    }
+
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
       width: 100%;
       max-width: 400px;
     }
 
-    .username-input input {
-      padding: 16px 24px;
+    .input-wrapper {
+      position: relative;
+    }
+
+    .input-wrapper input {
+      width: 100%;
+      padding: 20px 24px;
       font-size: 18px;
-      background: rgba(255, 255, 255, 0.1);
-      border: 2px solid rgba(0, 217, 255, 0.3);
-      color: white;
-      border-radius: 12px;
+      font-weight: 500;
+      background: var(--bg-glass);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      color: var(--text);
       outline: none;
       transition: all 0.3s ease;
     }
 
-    .username-input input::placeholder {
-      color: rgba(255, 255, 255, 0.5);
+    .input-wrapper input::placeholder {
+      color: var(--text-muted);
     }
 
-    .username-input input:focus {
-      border-color: #00d9ff;
-      background: rgba(255, 255, 255, 0.15);
-      box-shadow: 0 0 20px rgba(0, 217, 255, 0.3);
+    .input-wrapper input:focus {
+      border-color: var(--primary);
+      background: rgba(99, 102, 241, 0.1);
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
     }
 
-    #connectBtn {
-      padding: 20px 50px;
-      font-size: 24px;
+    .btn-start {
+      padding: 22px 48px;
+      font-size: 18px;
       font-weight: 700;
-      background: linear-gradient(135deg, #00d9ff 0%, #00a8cc 100%);
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
       color: white;
       border: none;
-      border-radius: 50px;
+      border-radius: 16px;
       cursor: pointer;
-      box-shadow: 0 0 30px rgba(0, 217, 255, 0.5);
       transition: all 0.3s ease;
       text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: 2px;
+      position: relative;
+      overflow: hidden;
     }
 
-    #connectBtn:hover:not(:disabled) {
-      transform: translateY(-5px);
-      box-shadow: 0 0 40px rgba(0, 217, 255, 0.8);
+    .btn-start::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, var(--primary-light), var(--primary));
+      opacity: 0;
+      transition: opacity 0.3s ease;
     }
 
-    #connectBtn:disabled {
+    .btn-start:hover:not(:disabled)::before {
+      opacity: 1;
+    }
+
+    .btn-start:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 40px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn-start:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-start span {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ========== MAIN APP ========== */
+    #mainApp {
+      padding: 30px;
+      gap: 30px;
+    }
+
+    .app-header {
+      text-align: center;
+      width: 100%;
+    }
+
+    .user-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      background: var(--bg-glass);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .user-badge .name {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .status-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      animation: blink 2s ease-in-out infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .status-indicator.waiting { background: var(--warning); }
+    .status-indicator.error { background: var(--danger); animation: none; }
+
+    /* ========== CONVERSATION AREA ========== */
+    .conversation-area {
+      flex: 1;
+      width: 100%;
+      max-width: 800px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      min-height: 0;
+    }
+
+    .avatar-display {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      padding: 40px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      backdrop-filter: blur(20px);
+    }
+
+    .avatar-display .avatar-ring {
+      width: 120px;
+      height: 120px;
+    }
+
+    .avatar-display .avatar-inner {
+      font-size: 48px;
+    }
+
+    .avatar-status {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .avatar-status.busy {
+      color: var(--warning);
+    }
+
+    .queue-banner {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 16px 24px;
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      border-radius: 12px;
+      font-size: 15px;
+      color: var(--warning);
+    }
+
+    .queue-banner.visible {
+      display: flex;
+    }
+
+    .queue-position {
+      font-weight: 700;
+      font-size: 24px;
+    }
+
+    /* ========== TRANSCRIPT ========== */
+    .transcript-box {
+      flex: 1;
+      min-height: 150px;
+      max-height: 300px;
+      padding: 24px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow-y: auto;
+      font-size: 16px;
+      line-height: 1.8;
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .transcript-box:empty::before {
+      content: 'La trascrizione apparira qui...';
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    .transcript-box .interim {
+      color: var(--accent);
+      opacity: 0.7;
+    }
+
+    .transcript-box::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .transcript-box::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .transcript-box::-webkit-scrollbar-thumb {
       background: rgba(255, 255, 255, 0.1);
-      color: rgba(255, 255, 255, 0.3);
+      border-radius: 3px;
+    }
+
+    /* ========== TALK BUTTON ========== */
+    .talk-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .talk-hint {
+      font-size: 14px;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    .talk-btn {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s ease;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      box-shadow: 0 10px 40px rgba(99, 102, 241, 0.3);
+    }
+
+    .talk-btn::before {
+      content: '';
+      position: absolute;
+      inset: -8px;
+      border-radius: 50%;
+      border: 2px solid var(--primary);
+      opacity: 0.3;
+      transition: all 0.3s ease;
+    }
+
+    .talk-btn:disabled {
+      opacity: 0.2;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .talk-btn:disabled::before {
+      display: none;
+    }
+
+    .talk-btn:not(:disabled):hover::before {
+      inset: -12px;
+      opacity: 0.5;
+    }
+
+    .talk-btn.recording {
+      background: linear-gradient(135deg, var(--danger), #dc2626);
+      box-shadow: 0 10px 40px rgba(239, 68, 68, 0.4);
+      transform: scale(1.1);
+    }
+
+    .talk-btn.recording::before {
+      border-color: var(--danger);
+      animation: recording-pulse 1s ease-in-out infinite;
+    }
+
+    @keyframes recording-pulse {
+      0%, 100% { inset: -8px; opacity: 0.5; }
+      50% { inset: -20px; opacity: 0; }
+    }
+
+    .talk-btn-icon {
+      font-size: 48px;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+    }
+
+    /* ========== ACTION BUTTONS ========== */
+    .action-row {
+      display: flex;
+      gap: 16px;
+      width: 100%;
+      max-width: 500px;
+    }
+
+    .action-btn {
+      flex: 1;
+      padding: 18px 24px;
+      font-size: 15px;
+      font-weight: 600;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .action-btn.primary {
+      background: linear-gradient(135deg, var(--success), #059669);
+      color: white;
+    }
+
+    .action-btn.primary:hover:not(:disabled) {
+      box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .action-btn.danger {
+      background: linear-gradient(135deg, var(--danger), #dc2626);
+      color: white;
+    }
+
+    .action-btn.danger:hover:not(:disabled) {
+      box-shadow: 0 10px 30px rgba(239, 68, 68, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .action-btn.secondary {
+      background: var(--bg-glass);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .action-btn.secondary:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .action-btn:disabled {
+      opacity: 0.3;
       cursor: not-allowed;
       transform: none;
       box-shadow: none;
     }
 
-    /* ========== MAIN APP (HIDDEN INITIALLY) ========== */
-    .container {
-      max-width: 700px;
+    /* ========== STATUS BAR ========== */
+    .status-bar {
       width: 100%;
-      margin: 0 auto;
-      display: none;
-      flex-direction: column;
-      gap: 20px;
-      flex: 1;
-    }
-
-    .container.active {
-      display: flex;
-    }
-
-    .header {
-      text-align: center;
-      color: white;
-      padding: 20px 0;
-    }
-
-    .header h1 {
-      font-size: 28px;
-      margin-bottom: 8px;
-      color: #00d9ff;
-      text-shadow: 0 0 15px rgba(0, 217, 255, 0.5);
-    }
-
-    .user-info {
-      font-size: 14px;
-      opacity: 0.9;
-      margin-top: 8px;
-      color: rgba(255, 255, 255, 0.8);
-    }
-
-    /* ========== AVATAR STATUS CARD ========== */
-    .avatar-status-card {
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(0, 217, 255, 0.2);
-      border-radius: 16px;
-      padding: 24px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
-      text-align: center;
-    }
-
-    .avatar-indicator {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-
-    .avatar-icon {
-      font-size: 48px;
-      filter: drop-shadow(0 0 10px rgba(0, 217, 255, 0.5));
-    }
-
-    .avatar-state {
-      font-size: 18px;
-      font-weight: 600;
-      color: white;
-    }
-
-    .avatar-state.idle {
-      color: #00ff88;
-      text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
-    }
-
-    .avatar-state.busy {
-      color: #ff4444;
-      text-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
-    }
-
-    .queue-info {
-      padding: 12px;
-      background: rgba(255, 193, 7, 0.1);
-      border: 1px solid rgba(255, 193, 7, 0.3);
-      border-radius: 8px;
-      margin-top: 12px;
-      font-size: 14px;
-      color: #ffc107;
-    }
-
-    .active-user-info {
-      padding: 12px;
-      background: rgba(0, 217, 255, 0.1);
-      border: 1px solid rgba(0, 217, 255, 0.3);
-      border-radius: 8px;
-      margin-top: 12px;
-      font-size: 14px;
-      color: #00d9ff;
-    }
-
-    /* ========== CONTROLS ========== */
-    .controls {
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(0, 217, 255, 0.2);
-      border-radius: 16px;
-      padding: 24px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
-    }
-
-    .control-section {
-      margin-bottom: 20px;
-    }
-
-    .control-section:last-child {
-      margin-bottom: 0;
-    }
-
-    .control-section h3 {
-      font-size: 14px;
-      color: rgba(0, 217, 255, 0.8);
-      margin-bottom: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .button-group {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    button {
-      flex: 1;
-      min-width: 140px;
-      padding: 16px 24px;
-      font-size: 16px;
-      font-weight: 600;
-      border: none;
+      max-width: 500px;
+      padding: 14px 20px;
+      background: var(--bg-glass);
+      border: 1px solid var(--border);
       border-radius: 12px;
-      cursor: pointer;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-muted);
       transition: all 0.3s ease;
-      display: flex;
+    }
+
+    .status-bar.active {
+      background: rgba(16, 185, 129, 0.1);
+      border-color: rgba(16, 185, 129, 0.3);
+      color: var(--success);
+    }
+
+    .status-bar.waiting {
+      background: rgba(245, 158, 11, 0.1);
+      border-color: rgba(245, 158, 11, 0.3);
+      color: var(--warning);
+    }
+
+    .status-bar.error {
+      background: rgba(239, 68, 68, 0.1);
+      border-color: rgba(239, 68, 68, 0.3);
+      color: var(--danger);
+    }
+
+    .status-bar.recording {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: rgba(239, 68, 68, 0.4);
+      color: var(--danger);
+      animation: status-pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes status-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    /* ========== WAITING OVERLAY ========== */
+    .waiting-overlay {
+      display: none;
+      position: absolute;
+      inset: 0;
+      background: rgba(10, 10, 15, 0.95);
+      backdrop-filter: blur(10px);
+      z-index: 10;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-    }
-
-    button:disabled {
-      background: rgba(255, 255, 255, 0.1);
-      color: rgba(255, 255, 255, 0.3);
-      cursor: not-allowed;
-      box-shadow: none;
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, #00d9ff 0%, #00a8cc 100%);
-      color: white;
-      box-shadow: 0 0 20px rgba(0, 217, 255, 0.4);
-    }
-
-    .btn-primary:hover:not(:disabled) {
-      box-shadow: 0 0 30px rgba(0, 217, 255, 0.6);
-      transform: translateY(-2px);
-    }
-
-    .btn-danger {
-      background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
-      color: white;
-      box-shadow: 0 0 20px rgba(255, 68, 68, 0.4);
-    }
-
-    .btn-danger:hover:not(:disabled) {
-      box-shadow: 0 0 30px rgba(255, 68, 68, 0.6);
-      transform: translateY(-2px);
-    }
-
-    .btn-warning {
-      background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
-      color: white;
-      box-shadow: 0 0 20px rgba(255, 193, 7, 0.4);
-    }
-
-    .btn-warning:hover:not(:disabled) {
-      box-shadow: 0 0 30px rgba(255, 193, 7, 0.6);
-      transform: translateY(-2px);
-    }
-
-    .btn-secondary {
-      background: rgba(255, 255, 255, 0.1);
-      color: white;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    .btn-secondary:hover:not(:disabled) {
-      background: rgba(255, 255, 255, 0.15);
-      border-color: rgba(255, 255, 255, 0.3);
-    }
-
-    .btn-recording {
-      background: linear-gradient(135deg, #ff0055 0%, #cc0044 100%);
-      color: white;
-      animation: pulse-recording 1.5s infinite;
-    }
-
-    @keyframes pulse-recording {
-      0%, 100% {
-        box-shadow: 0 0 20px rgba(255, 0, 85, 0.6);
-      }
-      50% {
-        box-shadow: 0 0 40px rgba(255, 0, 85, 1);
-      }
-    }
-
-    .status {
-      padding: 12px 16px;
-      border-radius: 8px;
+      gap: 40px;
       text-align: center;
-      font-weight: 500;
-      font-size: 14px;
-      margin-top: 16px;
-      border: 1px solid;
+      padding: 40px;
     }
 
-    .status.idle {
-      background: rgba(255, 255, 255, 0.05);
-      color: rgba(255, 255, 255, 0.6);
-      border-color: rgba(255, 255, 255, 0.1);
-    }
-
-    .status.connecting {
-      background: rgba(255, 193, 7, 0.1);
-      color: #ffc107;
-      border-color: rgba(255, 193, 7, 0.3);
-    }
-
-    .status.active {
-      background: rgba(0, 255, 136, 0.1);
-      color: #00ff88;
-      border-color: rgba(0, 255, 136, 0.3);
-    }
-
-    .status.waiting {
-      background: rgba(255, 193, 7, 0.1);
-      color: #ffc107;
-      border-color: rgba(255, 193, 7, 0.3);
-    }
-
-    .status.error {
-      background: rgba(255, 68, 68, 0.1);
-      color: #ff4444;
-      border-color: rgba(255, 68, 68, 0.3);
-    }
-
-    /* ========== TRANSCRIPT ========== */
-    .transcript-container {
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(0, 217, 255, 0.2);
-      border-radius: 16px;
-      padding: 24px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
-      flex: 1;
+    .waiting-overlay.visible {
       display: flex;
-      flex-direction: column;
-      min-height: 300px;
     }
 
-    .transcript-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid rgba(0, 217, 255, 0.2);
+    .waiting-spinner {
+      width: 80px;
+      height: 80px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
     }
 
-    .transcript-header h2 {
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .waiting-title {
+      font-size: 32px;
+      font-weight: 700;
+    }
+
+    .waiting-position {
+      font-size: 72px;
+      font-weight: 800;
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    .waiting-text {
       font-size: 18px;
-      color: #00d9ff;
+      color: var(--text-muted);
     }
 
-    #clearBtn {
-      padding: 8px 16px;
-      font-size: 14px;
-      background: rgba(255, 255, 255, 0.1);
-      color: rgba(255, 255, 255, 0.7);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    #clearBtn:hover {
-      background: rgba(255, 255, 255, 0.15);
-      color: white;
-    }
-
-    .transcript-content {
-      flex: 1;
-      overflow-y: auto;
-      padding: 12px;
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: 8px;
+    .leave-queue-btn {
+      padding: 16px 32px;
       font-size: 16px;
-      line-height: 1.6;
-      color: rgba(255, 255, 255, 0.9);
-      white-space: pre-wrap;
-      word-wrap: break-word;
+      font-weight: 600;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
     }
 
-    .transcript-content:empty::before {
-      content: "La trascrizione apparirà qui...";
-      color: rgba(255, 255, 255, 0.4);
-      font-style: italic;
+    .leave-queue-btn:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: var(--danger);
+      color: var(--danger);
     }
 
-    .interim {
-      color: rgba(0, 217, 255, 0.6);
-      font-style: italic;
-    }
-
-    /* ========== SCROLLBAR STYLING ========== */
-    .transcript-content::-webkit-scrollbar {
-      width: 8px;
-    }
-
-    .transcript-content::-webkit-scrollbar-track {
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: 4px;
-    }
-
-    .transcript-content::-webkit-scrollbar-thumb {
-      background: rgba(0, 217, 255, 0.3);
-      border-radius: 4px;
-    }
-
-    .transcript-content::-webkit-scrollbar-thumb:hover {
-      background: rgba(0, 217, 255, 0.5);
-    }
-
-    @media (max-width: 480px) {
-      body {
-        padding: 12px;
+    /* ========== RESPONSIVE ========== */
+    @media (max-height: 800px) {
+      .avatar-display {
+        padding: 24px;
       }
+      .avatar-display .avatar-ring {
+        width: 80px;
+        height: 80px;
+      }
+      .avatar-display .avatar-inner {
+        font-size: 32px;
+      }
+      .talk-btn {
+        width: 120px;
+        height: 120px;
+      }
+      .talk-btn-icon {
+        font-size: 40px;
+      }
+      .transcript-box {
+        min-height: 100px;
+        max-height: 200px;
+      }
+    }
 
-      #landingPage h1 {
+    @media (max-width: 600px) {
+      .landing-title {
         font-size: 36px;
       }
-
-      #landingPage p {
+      .landing-subtitle {
         font-size: 16px;
       }
-
-      #connectBtn {
-        padding: 16px 32px;
-        font-size: 20px;
+      .avatar-ring {
+        width: 140px;
+        height: 140px;
       }
-
-      .header h1 {
-        font-size: 24px;
-      }
-
-      .controls, .transcript-container, .avatar-status-card {
-        padding: 16px;
-      }
-
-      button {
-        min-width: 120px;
-        padding: 14px 20px;
-        font-size: 15px;
+      .avatar-inner {
+        font-size: 56px;
       }
     }
   </style>
 </head>
 <body>
+  <div class="bg-gradient"></div>
+  <div class="grid-overlay"></div>
+
   <!-- ========== LANDING PAGE ========== -->
-  <div id="landingPage">
-    <div>
-      <h1>🤖 Avatar Virtuale</h1>
-      <p>Inserisci il tuo nome e connettiti per parlare con l'avatar</p>
+  <div id="landingPage" class="page">
+    <div class="logo-section">
+      <div class="avatar-ring">
+        <div class="avatar-inner">🤖</div>
+      </div>
+      <h1 class="landing-title">AI Avatar</h1>
+      <p class="landing-subtitle">Inserisci il tuo nome per iniziare una conversazione con il nostro assistente virtuale</p>
     </div>
-    <div class="username-input">
-      <input 
-        type="text" 
-        id="usernameInput" 
-        placeholder="Il tuo nome" 
-        maxlength="30"
-      >
-      <button id="connectBtn" disabled>
-        Connetti
+    <form class="login-form" onsubmit="return false;">
+      <div class="input-wrapper">
+        <input 
+          type="text" 
+          id="usernameInput" 
+          placeholder="Il tuo nome"
+          maxlength="30"
+          autocomplete="off"
+        >
+      </div>
+      <button type="submit" id="connectBtn" class="btn-start" disabled>
+        <span>Inizia</span>
       </button>
-    </div>
+    </form>
   </div>
 
-  <!-- ========== MAIN APP (HIDDEN) ========== -->
-  <div class="container" id="mainApp">
-    <div class="header">
-      <h1>🤖 Conversazione con Avatar</h1>
-      <div class="user-info">
-        <span id="userDisplay"></span> • <span id="userIdDisplay"></span>
+  <!-- ========== MAIN APP ========== -->
+  <div id="mainApp" class="page hidden">
+    <header class="app-header">
+      <div class="user-badge">
+        <div class="status-indicator" id="statusIndicator"></div>
+        <span class="name" id="userDisplay"></span>
+        <span id="userIdDisplay"></span>
+      </div>
+    </header>
+
+    <div class="conversation-area">
+      <div class="avatar-display">
+        <div class="avatar-ring">
+          <div class="avatar-inner">🤖</div>
+        </div>
+        <div id="avatarState" class="avatar-status">Pronto</div>
+      </div>
+
+      <div id="queueBanner" class="queue-banner">
+        <span>Posizione in coda:</span>
+        <span id="queuePosition" class="queue-position">-</span>
+      </div>
+
+      <div id="transcript" class="transcript-box"></div>
+
+      <div class="talk-section">
+        <p class="talk-hint" id="talkHint">Tieni premuto per parlare</p>
+        <button id="talkBtn" class="talk-btn" disabled>
+          <span class="talk-btn-icon">🎤</span>
+        </button>
       </div>
     </div>
 
-    <!-- Avatar Status Card -->
-    <div class="avatar-status-card">
-      <div class="avatar-indicator">
-        <span class="avatar-icon">🤖</span>
-        <span id="avatarState" class="avatar-state idle">Avatar Libero</span>
-      </div>
-      <div id="queueInfo" class="queue-info" style="display: none;">
-        In attesa... Posizione in coda: <strong id="queuePosition">-</strong>
-      </div>
-      <div id="activeUserInfo" class="active-user-info" style="display: none;">
-        Conversazione attiva: <strong id="activeUsername">-</strong>
-      </div>
+    <div class="action-row">
+      <button id="startConvBtn" class="action-btn primary" disabled>
+        <span>💬</span>
+        <span>Inizia</span>
+      </button>
+      <button id="endConvBtn" class="action-btn danger" disabled>
+        <span>🚪</span>
+        <span>Termina</span>
+      </button>
     </div>
 
-    <!-- Controls -->
-    <div class="controls">
-      <!-- Conversation Control -->
-      <div class="control-section">
-        <h3>Controllo Conversazione</h3>
-        <div class="button-group">
-          <button id="startConvBtn" class="btn-primary" disabled>
-            <span>💬</span>
-            <span>Inizia Conversazione</span>
-          </button>
-          <button id="endConvBtn" class="btn-danger" disabled>
-            <span>🚪</span>
-            <span>Termina Conversazione</span>
-          </button>
-        </div>
-      </div>
+    <div id="status" class="status-bar">Connessione...</div>
 
-      <!-- Recording Control -->
-      <div class="control-section">
-        <h3>Registrazione</h3>
-        <div class="button-group">
-          <button id="startRecBtn" class="btn-primary" disabled>
-            <span>🎤</span>
-            <span>Avvia Registrazione</span>
-          </button>
-          <button id="stopRecBtn" class="btn-danger" disabled>
-            <span>⏹</span>
-            <span>Ferma Registrazione</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Queue Control -->
-      <div class="control-section" id="queueControlSection" style="display: none;">
-        <h3>Azioni</h3>
-        <div class="button-group">
-          <button id="leaveQueueBtn" class="btn-secondary">
-            <span>❌</span>
-            <span>Abbandona Coda</span>
-          </button>
-        </div>
-      </div>
-
-      <div id="status" class="status idle">Disconnesso</div>
-    </div>
-
-    <!-- Transcript -->
-    <div class="transcript-container">
-      <div class="transcript-header">
-        <h2>Trascrizione</h2>
-        <button id="clearBtn">Cancella</button>
-      </div>
-      <div id="transcript" class="transcript-content"></div>
+    <!-- Waiting Overlay -->
+    <div id="waitingOverlay" class="waiting-overlay">
+      <div class="waiting-spinner"></div>
+      <h2 class="waiting-title">In Attesa</h2>
+      <div class="waiting-position" id="waitingPosition">-</div>
+      <p class="waiting-text">Qualcun altro sta parlando con l'avatar.<br>Sarai notificato quando sara il tuo turno.</p>
+      <button id="leaveQueueBtn" class="leave-queue-btn">Abbandona la coda</button>
     </div>
   </div>
 
@@ -585,7 +752,7 @@
       let audioContext = null;
       let processor = null;
 
-      let userState = 'disconnected'; // 'disconnected' | 'waiting' | 'active'
+      let userState = 'disconnected';
       let conversationActive = false;
       let isRecording = false;
       let userId = null;
@@ -603,22 +770,21 @@
       
       const userDisplay = document.getElementById('userDisplay');
       const userIdDisplay = document.getElementById('userIdDisplay');
+      const statusIndicator = document.getElementById('statusIndicator');
       const avatarState = document.getElementById('avatarState');
-      const queueInfo = document.getElementById('queueInfo');
+      const queueBanner = document.getElementById('queueBanner');
       const queuePositionSpan = document.getElementById('queuePosition');
-      const activeUserInfo = document.getElementById('activeUserInfo');
-      const activeUsernameSpan = document.getElementById('activeUsername');
+      const waitingOverlay = document.getElementById('waitingOverlay');
+      const waitingPosition = document.getElementById('waitingPosition');
       
       const startConvBtn = document.getElementById('startConvBtn');
       const endConvBtn = document.getElementById('endConvBtn');
-      const startRecBtn = document.getElementById('startRecBtn');
-      const stopRecBtn = document.getElementById('stopRecBtn');
+      const talkBtn = document.getElementById('talkBtn');
+      const talkHint = document.getElementById('talkHint');
       const leaveQueueBtn = document.getElementById('leaveQueueBtn');
-      const queueControlSection = document.getElementById('queueControlSection');
       
       const statusDiv = document.getElementById('status');
       const transcriptDiv = document.getElementById('transcript');
-      const clearBtn = document.getElementById('clearBtn');
 
       // ========== USERNAME INPUT ==========
       usernameInput.addEventListener('input', () => {
@@ -636,8 +802,8 @@
         username = usernameInput.value.trim();
         if (!username) return;
         
-        landingPage.style.display = 'none';
-        mainApp.classList.add('active');
+        landingPage.classList.add('hidden');
+        mainApp.classList.remove('hidden');
         
         connectToRelay();
       });
@@ -652,7 +818,6 @@
           relaySocket.onopen = () => {
             console.log('Connected to relay server');
             
-            // Identify as web client with username
             relaySocket.send(JSON.stringify({
               type: 'identify',
               client: 'web',
@@ -726,44 +891,42 @@
         userState = message.state;
         
         userDisplay.textContent = username;
-        userIdDisplay.textContent = `ID: ${userId}`;
+        userIdDisplay.textContent = userId;
         
         if (userState === 'active') {
-          updateStatus('Sei attivo! Puoi iniziare la conversazione', 'active');
+          updateStatus('Sei attivo! Premi "Inizia" per cominciare', 'active');
           startConvBtn.disabled = false;
-          avatarState.textContent = 'Sei Attivo';
-          avatarState.className = 'avatar-state busy';
-          queueInfo.style.display = 'none';
-          activeUserInfo.style.display = 'none';
-          queueControlSection.style.display = 'none';
+          avatarState.textContent = 'Pronto per te';
+          avatarState.classList.remove('busy');
+          waitingOverlay.classList.remove('visible');
+          queueBanner.classList.remove('visible');
+          statusIndicator.classList.remove('waiting', 'error');
           
         } else if (userState === 'waiting') {
           queuePosition = message.queuePosition;
           updateStatus(`In coda - Posizione: ${queuePosition}`, 'waiting');
           queuePositionSpan.textContent = queuePosition;
-          queueInfo.style.display = 'block';
-          activeUserInfo.style.display = 'none';
-          avatarState.textContent = 'Avatar Occupato';
-          avatarState.className = 'avatar-state busy';
-          queueControlSection.style.display = 'block';
+          waitingPosition.textContent = queuePosition;
+          waitingOverlay.classList.add('visible');
+          avatarState.textContent = 'Occupato';
+          avatarState.classList.add('busy');
+          statusIndicator.classList.add('waiting');
         }
       }
 
       function handlePromotedToActive() {
         userState = 'active';
-        updateStatus('✅ Sei stato promosso! Puoi iniziare la conversazione', 'active');
+        updateStatus('E il tuo turno! Premi "Inizia" per cominciare', 'active');
         startConvBtn.disabled = false;
-        avatarState.textContent = 'Sei Attivo';
-        avatarState.className = 'avatar-state busy';
-        queueInfo.style.display = 'none';
-        activeUserInfo.style.display = 'none';
-        queueControlSection.style.display = 'none';
+        avatarState.textContent = 'Pronto per te';
+        avatarState.classList.remove('busy');
+        waitingOverlay.classList.remove('visible');
+        queueBanner.classList.remove('visible');
+        statusIndicator.classList.remove('waiting', 'error');
         
-        // Alert user
-        if (document.hidden) {
-          new Notification('Il tuo turno!', {
-            body: 'Puoi iniziare la conversazione con l\'avatar',
-            icon: '🤖'
+        if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+          new Notification('E il tuo turno!', {
+            body: 'Puoi iniziare la conversazione con l\'avatar'
           });
         }
       }
@@ -772,7 +935,8 @@
         if (userState === 'waiting') {
           queuePosition = message.position;
           queuePositionSpan.textContent = queuePosition;
-          updateStatus(`In coda - Posizione: ${queuePosition} (${message.totalWaiting} in attesa)`, 'waiting');
+          waitingPosition.textContent = queuePosition;
+          updateStatus(`In coda - Posizione: ${queuePosition}`, 'waiting');
         }
       }
 
@@ -780,13 +944,16 @@
         conversationActive = true;
         startConvBtn.disabled = true;
         endConvBtn.disabled = false;
-        startRecBtn.disabled = false;
-        updateStatus('Conversazione attiva - Puoi registrare', 'active');
+        talkBtn.disabled = false;
+        talkHint.textContent = 'Tieni premuto per parlare';
+        avatarState.textContent = 'Ti ascolto';
+        updateStatus('Conversazione attiva - Tieni premuto il microfono per parlare', 'active');
       }
 
       function handleKickedOut(message) {
         stopRecording();
         updateStatus(message.reason || 'Sei stato disconnesso', 'error');
+        statusIndicator.classList.add('error');
         
         setTimeout(() => {
           if (relaySocket) {
@@ -797,8 +964,8 @@
       }
 
       function handleAvatarBusy(message) {
-        activeUsernameSpan.textContent = message.activeUser || 'Sconosciuto';
-        activeUserInfo.style.display = 'block';
+        avatarState.textContent = 'Occupato';
+        avatarState.classList.add('busy');
       }
 
       // ========== CONVERSATION CONTROL ==========
@@ -821,12 +988,10 @@
           conversationActive = false;
           startConvBtn.disabled = false;
           endConvBtn.disabled = true;
-          startRecBtn.disabled = true;
-          stopRecBtn.disabled = true;
+          talkBtn.disabled = true;
           
           updateStatus('Conversazione terminata', 'idle');
           
-          // Return to landing after delay
           setTimeout(() => {
             if (relaySocket) {
               relaySocket.close();
@@ -836,18 +1001,41 @@
         }
       });
 
-      // ========== RECORDING CONTROL ==========
-      startRecBtn.addEventListener('click', async () => {
-        await startRecording();
-      });
+      // ========== HOLD-TO-TALK RECORDING ==========
+      let isHolding = false;
 
-      stopRecBtn.addEventListener('click', () => {
+      function handleTalkStart(e) {
+        e.preventDefault();
+        if (talkBtn.disabled || isHolding) return;
+        isHolding = true;
+        startRecording();
+      }
+
+      function handleTalkEnd(e) {
+        e.preventDefault();
+        if (!isHolding) return;
+        isHolding = false;
         stopRecording();
-      });
+      }
+
+      // Mouse events
+      talkBtn.addEventListener('mousedown', handleTalkStart);
+      talkBtn.addEventListener('mouseup', handleTalkEnd);
+      talkBtn.addEventListener('mouseleave', handleTalkEnd);
+
+      // Touch events
+      talkBtn.addEventListener('touchstart', handleTalkStart, { passive: false });
+      talkBtn.addEventListener('touchend', handleTalkEnd, { passive: false });
+      talkBtn.addEventListener('touchcancel', handleTalkEnd, { passive: false });
+
+      // Prevent context menu on long press
+      talkBtn.addEventListener('contextmenu', (e) => e.preventDefault());
 
       async function startRecording() {
         try {
-          updateStatus('Richiesta accesso al microfono...', 'connecting');
+          talkBtn.classList.add('recording');
+          talkHint.textContent = 'Rilascia per inviare';
+          updateStatus('Registrazione in corso...', 'recording');
           
           if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
             throw new Error('Il tuo browser non supporta l\'accesso al microfono');
@@ -861,16 +1049,10 @@
             } 
           });
 
-          updateStatus('Connessione a Deepgram...', 'connecting');
-
           deepgramSocket = new WebSocket(DEEPGRAM_URL, ['token', DEEPGRAM_API_KEY]);
 
           deepgramSocket.onopen = () => {
-            updateStatus('🔴 Registrazione in corso...', 'active');
             isRecording = true;
-            startRecBtn.disabled = true;
-            stopRecBtn.disabled = false;
-            stopRecBtn.classList.add('btn-recording');
             setupAudioProcessing();
           };
 
@@ -896,7 +1078,7 @@
 
           deepgramSocket.onerror = (error) => {
             console.error('Deepgram WebSocket error:', error);
-            updateStatus('Errore di connessione Deepgram', 'error');
+            updateStatus('Errore di connessione', 'error');
             stopRecording();
           };
 
@@ -910,6 +1092,8 @@
       }
 
       function stopRecording() {
+        talkBtn.classList.remove('recording');
+        
         if (deepgramSocket) {
           if (deepgramSocket.readyState === WebSocket.OPEN) {
             deepgramSocket.close();
@@ -935,13 +1119,10 @@
         isRecording = false;
         interimTranscript = '';
         updateTranscript();
-
-        startRecBtn.disabled = false;
-        stopRecBtn.disabled = true;
-        stopRecBtn.classList.remove('btn-recording');
         
         if (conversationActive) {
-          updateStatus('Conversazione attiva - Puoi registrare', 'active');
+          talkHint.textContent = 'Tieni premuto per parlare';
+          updateStatus('Conversazione attiva - Tieni premuto il microfono per parlare', 'active');
         }
       }
 
@@ -1007,16 +1188,10 @@
         transcriptDiv.scrollTop = transcriptDiv.scrollHeight;
       }
 
-      clearBtn.addEventListener('click', () => {
-        finalTranscript = '';
-        interimTranscript = '';
-        updateTranscript();
-      });
-
       // ========== UTILITY FUNCTIONS ==========
       function updateStatus(message, type = 'idle') {
         statusDiv.textContent = message;
-        statusDiv.className = `status ${type}`;
+        statusDiv.className = `status-bar ${type}`;
       }
 
       function handleError(error) {
@@ -1025,11 +1200,11 @@
         let errorMessage = 'Errore sconosciuto';
         
         if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
-          errorMessage = 'Permesso microfono negato. Abilita il microfono nelle impostazioni del browser.';
+          errorMessage = 'Permesso microfono negato. Abilita il microfono nelle impostazioni.';
         } else if (error.name === 'NotFoundError') {
           errorMessage = 'Nessun microfono trovato';
         } else if (error.name === 'NotReadableError') {
-          errorMessage = 'Microfono già in uso da un\'altra applicazione';
+          errorMessage = 'Microfono gia in uso';
         } else if (error.message) {
           errorMessage = error.message;
         }
@@ -1041,6 +1216,7 @@
       function handleDisconnection() {
         stopRecording();
         updateStatus('Disconnesso dal server', 'error');
+        statusIndicator.classList.add('error');
         
         setTimeout(() => {
           returnToLanding();
@@ -1048,10 +1224,9 @@
       }
 
       function returnToLanding() {
-        mainApp.classList.remove('active');
-        landingPage.style.display = 'flex';
+        mainApp.classList.add('hidden');
+        landingPage.classList.remove('hidden');
         
-        // Reset state
         userState = 'disconnected';
         conversationActive = false;
         isRecording = false;
@@ -1060,9 +1235,13 @@
         finalTranscript = '';
         interimTranscript = '';
         
-        // Reset UI
         usernameInput.value = '';
         connectBtn.disabled = true;
+        startConvBtn.disabled = true;
+        endConvBtn.disabled = true;
+        talkBtn.disabled = true;
+        waitingOverlay.classList.remove('visible');
+        transcriptDiv.innerHTML = '';
         updateStatus('Disconnesso', 'idle');
       }
 

@@ -19,6 +19,14 @@ A queue-based conversation web app with avatar using Deepgram transcription. Thi
 The app runs on port 5000 using `npm start`.
 
 ## Recent Changes
+- February 5, 2026: Complete UI redesign
+  - Modern, polished kiosk-friendly interface
+  - Hold-to-talk recording (like WhatsApp voice messages)
+  - Dark theme with gradient backgrounds and glassmorphism
+  - Animated avatar ring with pulse effects
+  - Queue waiting overlay for better UX
+  - Responsive design for various screen sizes
+
 - February 4, 2026: Initial setup for Replit environment
   - Changed port from 8080 to 5000
   - Bound server to 0.0.0.0 for Replit compatibility
