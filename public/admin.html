@@ -414,6 +414,44 @@
       color: #3b82f6;
     }
 
+    .transcript-area {
+      background: #f9fafb;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 16px;
+      min-height: 150px;
+      max-height: 300px;
+      overflow-y: auto;
+      font-size: 14px;
+      line-height: 1.8;
+      color: #1f2937;
+    }
+
+    .transcript-entry {
+      margin-bottom: 12px;
+      padding: 10px 14px;
+      background: white;
+      border-radius: 8px;
+      border-left: 4px solid #7c3aed;
+    }
+
+    .transcript-entry .meta {
+      font-size: 11px;
+      color: #9ca3af;
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .transcript-entry .text {
+      color: #1f2937;
+    }
+
+    .transcript-entry .text.interim {
+      color: #9ca3af;
+      font-style: italic;
+    }
+
     @media (max-width: 768px) {
       .dashboard {
         grid-template-columns: 1fr;
@@ -492,6 +530,18 @@
           <div class="label">Unity Clients Connessi</div>
           <div class="count" id="unityClientsCount">0</div>
         </div>
+      </div>
+    </div>
+
+    <!-- Transcription -->
+    <div class="card" style="margin-bottom: 20px;">
+      <h2>
+        <span>🎙️</span>
+        Trascrizione Live
+        <button class="btn btn-small" style="margin-left: auto; background: #6b7280;" onclick="clearTranscript()">Cancella</button>
+      </h2>
+      <div id="transcriptArea" class="transcript-area">
+        <div class="empty-state">La trascrizione apparira qui...</div>
       </div>
     </div>
 
@@ -617,6 +667,10 @@
       }
     }
 
+    // ========== TRANSCRIPTION STATE ==========
+    let transcriptEntries = [];
+    const transcriptArea = document.getElementById('transcriptArea');
+
     // ========== SERVER MESSAGE HANDLER ==========
     function handleServerMessage(data) {
       try {
@@ -627,6 +681,10 @@
           case 'admin_state_update':
             updateDashboard(message);
             break;
+          
+          case 'transcription':
+            handleTranscription(message);
+            break;
             
           default:
             console.log('Unknown message type:', message.type);
@@ -635,6 +693,64 @@
       } catch (error) {
         console.error('Error processing server message:', error);
       }
+    }
+
+    // ========== TRANSCRIPTION HANDLER ==========
+    function handleTranscription(message) {
+      const username = message.username || 'Utente';
+      const text = message.text;
+      const isFinal = message.isFinal;
+      const timestamp = new Date(message.timestamp || Date.now());
+      
+      const timeStr = timestamp.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      
+      if (isFinal) {
+        transcriptEntries.push({
+          username,
+          text,
+          time: timeStr
+        });
+        renderTranscript();
+      } else {
+        renderTranscript(text, username, timeStr);
+      }
+    }
+
+    function renderTranscript(interimText = null, interimUser = null, interimTime = null) {
+      if (transcriptEntries.length === 0 && !interimText) {
+        transcriptArea.innerHTML = '<div class="empty-state">La trascrizione apparira qui...</div>';
+        return;
+      }
+      
+      let html = transcriptEntries.map(entry => `
+        <div class="transcript-entry">
+          <div class="meta">
+            <span>${entry.username}</span>
+            <span>${entry.time}</span>
+          </div>
+          <div class="text">${entry.text}</div>
+        </div>
+      `).join('');
+      
+      if (interimText) {
+        html += `
+          <div class="transcript-entry">
+            <div class="meta">
+              <span>${interimUser}</span>
+              <span>${interimTime}</span>
+            </div>
+            <div class="text interim">${interimText}...</div>
+          </div>
+        `;
+      }
+      
+      transcriptArea.innerHTML = html;
+      transcriptArea.scrollTop = transcriptArea.scrollHeight;
+    }
+
+    function clearTranscript() {
+      transcriptEntries = [];
+      renderTranscript();
     }
 
     // ========== UPDATE DASHBOARD ==========

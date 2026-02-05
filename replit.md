@@ -28,6 +28,10 @@ The app runs on port 5000 using `npm start`.
   - Clean, minimal interface with subtle animations
   - Queue overlay for waiting users
   - Responsive scaling for tablet/desktop
+  - Terms and Conditions popup after name entry
+  - Simplified speaking page: just studio mic icon, talk button, close button
+  - Transcription moved to admin panel (real-time live view)
+  - Admin panel now shows live transcription with timestamps
 
 - February 4, 2026: Initial setup for Replit environment
   - Changed port from 8080 to 5000

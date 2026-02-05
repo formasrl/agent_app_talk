@@ -223,134 +223,217 @@
       cursor: not-allowed;
     }
 
-    /* ========== MAIN APP ========== */
-    #mainApp {
-      justify-content: space-between;
-      gap: 20px;
-    }
-
-    .app-header {
-      display: flex;
+    /* ========== TERMS MODAL ========== */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 100;
+      align-items: center;
       justify-content: center;
-      padding-bottom: 8px;
+      padding: 24px;
     }
 
-    .user-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 14px;
-      background: var(--bg-glass);
-      border: 1px solid var(--border);
-      border-radius: 100px;
-      font-size: 13px;
-      color: var(--text-secondary);
-    }
-
-    .status-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--success);
-    }
-
-    .status-dot.waiting { background: var(--warning); }
-    .status-dot.error { background: var(--danger); }
-
-    .user-chip .name {
-      color: var(--text);
-      font-weight: 500;
-    }
-
-    /* ========== MAIN CONTENT ========== */
-    .main-content {
-      flex: 1;
+    .modal-overlay.visible {
       display: flex;
-      flex-direction: column;
-      gap: 16px;
-      min-height: 0;
     }
 
-    .avatar-card {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-      padding: 28px 20px;
-      background: var(--bg-card);
+    .modal-card {
+      background: #16161d;
       border: 1px solid var(--border);
       border-radius: 20px;
+      width: 100%;
+      max-width: 400px;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
     }
 
-    .avatar-card .avatar-orb {
-      width: 80px;
-      height: 80px;
+    .modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
     }
 
-    .avatar-card .avatar-icon {
-      width: 32px;
-      height: 32px;
+    .modal-header h2 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
     }
 
-    .avatar-label {
-      font-size: 15px;
-      font-weight: 500;
-      color: var(--text-secondary);
-    }
-
-    .avatar-label.active {
-      color: var(--success);
-    }
-
-    .avatar-label.busy {
-      color: var(--warning);
-    }
-
-    .transcript-area {
+    .modal-body {
       flex: 1;
-      min-height: 80px;
-      max-height: 180px;
-      padding: 16px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
+      padding: 20px 24px;
       overflow-y: auto;
-      font-size: 15px;
-      line-height: 1.6;
-      color: var(--text-secondary);
       -webkit-overflow-scrolling: touch;
     }
 
-    .transcript-area:empty::before {
-      content: 'La trascrizione apparira qui...';
+    .modal-body p {
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+    }
+
+    .modal-body p:last-child {
+      margin-bottom: 0;
+    }
+
+    .modal-body ul {
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+      padding-left: 20px;
+    }
+
+    .modal-body li {
+      margin-bottom: 8px;
+    }
+
+    .modal-footer {
+      padding: 20px 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 12px;
+    }
+
+    .modal-footer .btn-secondary {
+      flex: 1;
+      padding: 14px 20px;
+      font-size: 15px;
+      font-weight: 600;
+      background: transparent;
       color: var(--text-muted);
-      font-style: italic;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
     }
 
-    .transcript-area .interim {
-      color: var(--accent);
-      opacity: 0.8;
+    .modal-footer .btn-secondary:active {
+      background: rgba(255, 255, 255, 0.05);
     }
 
-    /* ========== TALK SECTION ========== */
+    .modal-footer .btn-accept {
+      flex: 1;
+      padding: 14px 20px;
+      font-size: 15px;
+      font-weight: 600;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .modal-footer .btn-accept:active {
+      background: var(--primary-dark);
+    }
+
+    /* ========== SPEAKING PAGE ========== */
+    #speakingPage {
+      justify-content: center;
+      align-items: center;
+      gap: 40px;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: calc(20px + var(--safe-top));
+      right: 20px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--bg-glass);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      z-index: 10;
+    }
+
+    .close-btn:active {
+      background: rgba(248, 113, 113, 0.15);
+      border-color: rgba(248, 113, 113, 0.3);
+      color: var(--danger);
+    }
+
+    .studio-mic {
+      width: 140px;
+      height: 200px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .studio-mic svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .studio-mic .mic-body {
+      fill: #2a2a35;
+      stroke: var(--accent);
+      stroke-width: 1.5;
+    }
+
+    .studio-mic .mic-grille {
+      fill: none;
+      stroke: var(--text-muted);
+      stroke-width: 0.5;
+    }
+
+    .studio-mic .mic-ring {
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 2;
+      opacity: 0.6;
+    }
+
+    .studio-mic.recording .mic-body {
+      stroke: var(--danger);
+    }
+
+    .studio-mic.recording .mic-ring {
+      stroke: var(--danger);
+      animation: mic-glow 1s ease-in-out infinite;
+    }
+
+    @keyframes mic-glow {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
+    }
+
     .talk-section {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 12px;
-      padding: 20px 0;
+      gap: 16px;
     }
 
     .talk-label {
-      font-size: 13px;
+      font-size: 14px;
       color: var(--text-muted);
       font-weight: 500;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .talk-label.recording {
+      color: var(--danger);
     }
 
     .talk-btn {
-      width: 88px;
-      height: 88px;
+      width: 100px;
+      height: 100px;
       border-radius: 50%;
       border: none;
       cursor: pointer;
@@ -395,91 +478,13 @@
 
     @keyframes rec-pulse {
       0%, 100% { inset: -4px; opacity: 0.4; }
-      50% { inset: -14px; opacity: 0; }
+      50% { inset: -16px; opacity: 0; }
     }
 
     .talk-btn svg {
-      width: 32px;
-      height: 32px;
+      width: 36px;
+      height: 36px;
       fill: white;
-    }
-
-    /* ========== ACTIONS ========== */
-    .action-bar {
-      display: flex;
-      gap: 12px;
-    }
-
-    .action-btn {
-      flex: 1;
-      padding: 14px 16px;
-      font-size: 14px;
-      font-weight: 600;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.15s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-
-    .action-btn.start {
-      background: var(--success);
-      color: white;
-    }
-
-    .action-btn.end {
-      background: rgba(248, 113, 113, 0.15);
-      color: var(--danger);
-      border: 1px solid rgba(248, 113, 113, 0.3);
-    }
-
-    .action-btn:active:not(:disabled) {
-      transform: scale(0.97);
-    }
-
-    .action-btn:disabled {
-      opacity: 0.3;
-      cursor: not-allowed;
-    }
-
-    /* ========== STATUS ========== */
-    .status-bar {
-      padding: 12px 16px;
-      background: var(--bg-glass);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      text-align: center;
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-muted);
-      transition: all 0.2s ease;
-    }
-
-    .status-bar.active {
-      background: rgba(52, 211, 153, 0.1);
-      border-color: rgba(52, 211, 153, 0.25);
-      color: var(--success);
-    }
-
-    .status-bar.waiting {
-      background: rgba(251, 191, 36, 0.1);
-      border-color: rgba(251, 191, 36, 0.25);
-      color: var(--warning);
-    }
-
-    .status-bar.error {
-      background: rgba(248, 113, 113, 0.1);
-      border-color: rgba(248, 113, 113, 0.25);
-      color: var(--danger);
-    }
-
-    .status-bar.recording {
-      background: rgba(248, 113, 113, 0.12);
-      border-color: rgba(248, 113, 113, 0.3);
-      color: var(--danger);
     }
 
     /* ========== QUEUE OVERLAY ========== */
@@ -554,13 +559,6 @@
     @media (min-width: 600px) {
       .page {
         padding: 40px;
-        justify-content: center;
-        align-items: center;
-      }
-
-      #mainApp {
-        max-width: 480px;
-        width: 100%;
       }
 
       .avatar-orb {
@@ -586,14 +584,19 @@
         max-width: 380px;
       }
 
+      .studio-mic {
+        width: 180px;
+        height: 260px;
+      }
+
       .talk-btn {
-        width: 100px;
-        height: 100px;
+        width: 120px;
+        height: 120px;
       }
 
       .talk-btn svg {
-        width: 36px;
-        height: 36px;
+        width: 44px;
+        height: 44px;
       }
     }
   </style>
@@ -633,64 +636,82 @@
         autocapitalize="words"
       >
       <button type="submit" id="connectBtn" class="btn-primary" disabled>
-        Inizia
+        Continua
       </button>
     </form>
   </div>
 
-  <!-- ========== MAIN APP ========== -->
-  <div id="mainApp" class="page hidden">
-    <header class="app-header">
-      <div class="user-chip">
-        <div class="status-dot" id="statusDot"></div>
-        <span class="name" id="userDisplay"></span>
+  <!-- ========== TERMS MODAL ========== -->
+  <div id="termsModal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>Termini e Condizioni</h2>
       </div>
-    </header>
-
-    <div class="main-content">
-      <div class="avatar-card">
-        <div class="avatar-orb">
-          <div class="avatar-icon">
-            <svg viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="3"/>
-              <path d="M12 2a10 10 0 0 1 10 10"/>
-              <path d="M12 2a10 10 0 0 0-10 10"/>
-              <path d="M12 22a10 10 0 0 0 10-10"/>
-              <path d="M12 22a10 10 0 0 1-10-10"/>
-              <path d="M2 12h2"/>
-              <path d="M20 12h2"/>
-              <path d="M12 2v2"/>
-              <path d="M12 20v2"/>
-            </svg>
-          </div>
-        </div>
-        <span id="avatarLabel" class="avatar-label">Pronto</span>
+      <div class="modal-body">
+        <p>Benvenuto nel nostro servizio AI Avatar. Prima di continuare, ti chiediamo di leggere e accettare i seguenti termini:</p>
+        <ul>
+          <li>Le conversazioni vengono registrate e trascritte per migliorare il servizio.</li>
+          <li>I dati raccolti sono trattati in conformita con la normativa sulla privacy (GDPR).</li>
+          <li>Il servizio e fornito "cosi com'e" senza garanzie di alcun tipo.</li>
+          <li>L'uso improprio del servizio puo comportare l'esclusione.</li>
+        </ul>
+        <p>Continuando, confermi di aver letto e accettato questi termini e condizioni.</p>
       </div>
-
-      <div id="transcript" class="transcript-area"></div>
-
-      <div class="talk-section">
-        <span id="talkLabel" class="talk-label">TIENI PREMUTO PER PARLARE</span>
-        <button id="talkBtn" class="talk-btn" disabled>
-          <svg viewBox="0 0 24 24">
-            <path d="M12 1a4 4 0 0 0-4 4v7a4 4 0 0 0 8 0V5a4 4 0 0 0-4-4z"/>
-            <path d="M19 10v2a7 7 0 0 1-14 0v-2" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"/>
-            <line x1="12" y1="19" x2="12" y2="23" stroke="white" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-        </button>
+      <div class="modal-footer">
+        <button id="termsDeclineBtn" class="btn-secondary">Rifiuta</button>
+        <button id="termsAcceptBtn" class="btn-accept">Accetto</button>
       </div>
     </div>
+  </div>
 
-    <div class="action-bar">
-      <button id="startConvBtn" class="action-btn start" disabled>
-        Inizia conversazione
-      </button>
-      <button id="endConvBtn" class="action-btn end" disabled>
-        Termina
-      </button>
+  <!-- ========== SPEAKING PAGE ========== -->
+  <div id="speakingPage" class="page hidden">
+    <button id="closeBtn" class="close-btn">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+
+    <div id="studioMic" class="studio-mic">
+      <svg viewBox="0 0 100 150">
+        <!-- Mic stand base -->
+        <ellipse cx="50" cy="145" rx="25" ry="4" fill="#1a1a22"/>
+        <rect x="47" y="110" width="6" height="35" fill="#2a2a35" rx="2"/>
+        
+        <!-- Mic mount -->
+        <ellipse cx="50" cy="108" rx="18" ry="6" class="mic-body"/>
+        
+        <!-- Mic body -->
+        <rect x="28" y="25" width="44" height="85" rx="22" class="mic-body"/>
+        
+        <!-- Mic grille lines -->
+        <line x1="32" y1="35" x2="68" y2="35" class="mic-grille"/>
+        <line x1="32" y1="42" x2="68" y2="42" class="mic-grille"/>
+        <line x1="32" y1="49" x2="68" y2="49" class="mic-grille"/>
+        <line x1="32" y1="56" x2="68" y2="56" class="mic-grille"/>
+        <line x1="32" y1="63" x2="68" y2="63" class="mic-grille"/>
+        <line x1="32" y1="70" x2="68" y2="70" class="mic-grille"/>
+        <line x1="32" y1="77" x2="68" y2="77" class="mic-grille"/>
+        <line x1="32" y1="84" x2="68" y2="84" class="mic-grille"/>
+        <line x1="32" y1="91" x2="68" y2="91" class="mic-grille"/>
+        <line x1="32" y1="98" x2="68" y2="98" class="mic-grille"/>
+        
+        <!-- Glow ring -->
+        <circle cx="50" cy="67" r="32" class="mic-ring"/>
+      </svg>
     </div>
 
-    <div id="status" class="status-bar">Connessione...</div>
+    <div class="talk-section">
+      <span id="talkLabel" class="talk-label">Tieni premuto per parlare</span>
+      <button id="talkBtn" class="talk-btn">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 1a4 4 0 0 0-4 4v7a4 4 0 0 0 8 0V5a4 4 0 0 0-4-4z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          <line x1="12" y1="19" x2="12" y2="23" stroke="white" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
 
     <!-- Queue Overlay -->
     <div id="queueOverlay" class="queue-overlay">
@@ -723,29 +744,23 @@
       let username = '';
       let queuePosition = null;
 
-      let finalTranscript = '';
-      let interimTranscript = '';
-
       // ========== DOM ELEMENTS ==========
       const landingPage = document.getElementById('landingPage');
-      const mainApp = document.getElementById('mainApp');
+      const speakingPage = document.getElementById('speakingPage');
+      const termsModal = document.getElementById('termsModal');
       const usernameInput = document.getElementById('usernameInput');
       const connectBtn = document.getElementById('connectBtn');
+      const termsAcceptBtn = document.getElementById('termsAcceptBtn');
+      const termsDeclineBtn = document.getElementById('termsDeclineBtn');
       
-      const userDisplay = document.getElementById('userDisplay');
-      const statusDot = document.getElementById('statusDot');
-      const avatarLabel = document.getElementById('avatarLabel');
       const queueOverlay = document.getElementById('queueOverlay');
       const queueNumber = document.getElementById('queueNumber');
       
-      const startConvBtn = document.getElementById('startConvBtn');
-      const endConvBtn = document.getElementById('endConvBtn');
+      const closeBtn = document.getElementById('closeBtn');
       const talkBtn = document.getElementById('talkBtn');
       const talkLabel = document.getElementById('talkLabel');
+      const studioMic = document.getElementById('studioMic');
       const leaveQueueBtn = document.getElementById('leaveQueueBtn');
-      
-      const statusDiv = document.getElementById('status');
-      const transcriptDiv = document.getElementById('transcript');
 
       // ========== USERNAME INPUT ==========
       usernameInput.addEventListener('input', () => {
@@ -758,22 +773,28 @@
         }
       });
 
-      // ========== CONNECT BUTTON ==========
+      // ========== CONNECT BUTTON - SHOW TERMS ==========
       connectBtn.addEventListener('click', () => {
         username = usernameInput.value.trim();
         if (!username) return;
-        
+        termsModal.classList.add('visible');
+      });
+
+      // ========== TERMS BUTTONS ==========
+      termsDeclineBtn.addEventListener('click', () => {
+        termsModal.classList.remove('visible');
+      });
+
+      termsAcceptBtn.addEventListener('click', () => {
+        termsModal.classList.remove('visible');
         landingPage.classList.add('hidden');
-        mainApp.classList.remove('hidden');
-        
+        speakingPage.classList.remove('hidden');
         connectToRelay();
       });
 
       // ========== RELAY CONNECTION ==========
       function connectToRelay() {
         try {
-          updateStatus('Connessione...', 'connecting');
-          
           relaySocket = new WebSocket(RELAY_SERVER_URL);
           
           relaySocket.onopen = () => {
@@ -793,11 +814,11 @@
           };
 
           relaySocket.onerror = (error) => {
-            updateStatus('Errore di connessione', 'error');
+            console.error('Connection error:', error);
           };
           
         } catch (error) {
-          updateStatus('Connessione fallita', 'error');
+          console.error('Failed to connect:', error);
         }
       }
 
@@ -822,9 +843,6 @@
             case 'kicked_out':
               handleKickedOut(message);
               break;
-            case 'avatar_busy':
-              handleAvatarBusy(message);
-              break;
           }
         } catch (error) {
           console.error('Error:', error);
@@ -836,35 +854,26 @@
         userId = message.userId;
         userState = message.state;
         
-        userDisplay.textContent = username;
-        
         if (userState === 'active') {
-          updateStatus('Premi "Inizia conversazione"', 'active');
-          startConvBtn.disabled = false;
-          avatarLabel.textContent = 'Pronto';
-          avatarLabel.className = 'avatar-label active';
           queueOverlay.classList.remove('visible');
-          statusDot.className = 'status-dot';
+          talkBtn.disabled = false;
+          // Auto-start conversation
+          relaySocket.send(JSON.stringify({ type: 'start_conversation' }));
           
         } else if (userState === 'waiting') {
           queuePosition = message.queuePosition;
-          updateStatus('In coda: posizione ' + queuePosition, 'waiting');
           queueNumber.textContent = queuePosition;
           queueOverlay.classList.add('visible');
-          avatarLabel.textContent = 'Occupato';
-          avatarLabel.className = 'avatar-label busy';
-          statusDot.className = 'status-dot waiting';
         }
       }
 
       function handlePromotedToActive() {
         userState = 'active';
-        updateStatus('E il tuo turno!', 'active');
-        startConvBtn.disabled = false;
-        avatarLabel.textContent = 'Pronto';
-        avatarLabel.className = 'avatar-label active';
         queueOverlay.classList.remove('visible');
-        statusDot.className = 'status-dot';
+        talkBtn.disabled = false;
+        
+        // Auto-start conversation
+        relaySocket.send(JSON.stringify({ type: 'start_conversation' }));
         
         if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
           new Notification('E il tuo turno!', {
@@ -881,61 +890,31 @@
         if (userState === 'waiting') {
           queuePosition = message.position;
           queueNumber.textContent = queuePosition;
-          updateStatus('In coda: posizione ' + queuePosition, 'waiting');
         }
       }
 
       function handleConversationStarted() {
         conversationActive = true;
-        startConvBtn.disabled = true;
-        endConvBtn.disabled = false;
         talkBtn.disabled = false;
-        talkLabel.textContent = 'TIENI PREMUTO PER PARLARE';
-        avatarLabel.textContent = 'Ti ascolto';
-        updateStatus('Tieni premuto il microfono', 'active');
+        talkLabel.textContent = 'Tieni premuto per parlare';
       }
 
       function handleKickedOut(message) {
         stopRecording();
-        updateStatus(message.reason || 'Disconnesso', 'error');
-        statusDot.className = 'status-dot error';
-        
         setTimeout(() => {
           if (relaySocket) relaySocket.close();
           returnToLanding();
-        }, 2500);
+        }, 1500);
       }
 
-      function handleAvatarBusy(message) {
-        avatarLabel.textContent = 'Occupato';
-        avatarLabel.className = 'avatar-label busy';
-      }
-
-      // ========== CONVERSATION CONTROL ==========
-      startConvBtn.addEventListener('click', () => {
-        if (relaySocket && relaySocket.readyState === WebSocket.OPEN) {
-          relaySocket.send(JSON.stringify({ type: 'start_conversation' }));
-          updateStatus('Avvio...', 'connecting');
-        }
-      });
-
-      endConvBtn.addEventListener('click', () => {
+      // ========== CLOSE BUTTON ==========
+      closeBtn.addEventListener('click', () => {
         if (relaySocket && relaySocket.readyState === WebSocket.OPEN) {
           relaySocket.send(JSON.stringify({ type: 'end_conversation' }));
-          
-          stopRecording();
-          conversationActive = false;
-          startConvBtn.disabled = false;
-          endConvBtn.disabled = true;
-          talkBtn.disabled = true;
-          
-          updateStatus('Conversazione terminata', 'idle');
-          
-          setTimeout(() => {
-            if (relaySocket) relaySocket.close();
-            returnToLanding();
-          }, 1500);
+          relaySocket.close();
         }
+        stopRecording();
+        returnToLanding();
       });
 
       // ========== HOLD-TO-TALK ==========
@@ -969,8 +948,9 @@
       async function startRecording() {
         try {
           talkBtn.classList.add('recording');
-          talkLabel.textContent = 'RILASCIA PER INVIARE';
-          updateStatus('Registrazione...', 'recording');
+          talkLabel.classList.add('recording');
+          talkLabel.textContent = 'Rilascia per inviare';
+          studioMic.classList.add('recording');
           
           if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
             throw new Error('Microfono non supportato');
@@ -998,21 +978,13 @@
               const transcript = data.channel.alternatives[0].transcript;
               
               if (transcript && transcript.trim() !== '') {
-                if (data.is_final) {
-                  finalTranscript += transcript + ' ';
-                  interimTranscript = '';
-                  sendTranscriptionToServer(transcript, true);
-                } else {
-                  interimTranscript = transcript;
-                  sendTranscriptionToServer(transcript, false);
-                }
-                updateTranscript();
+                // Send to relay server (for admin panel)
+                sendTranscriptionToServer(transcript, data.is_final);
               }
             }
           };
 
           deepgramSocket.onerror = () => {
-            updateStatus('Errore connessione', 'error');
             stopRecording();
           };
 
@@ -1023,6 +995,8 @@
 
       function stopRecording() {
         talkBtn.classList.remove('recording');
+        talkLabel.classList.remove('recording');
+        studioMic.classList.remove('recording');
         
         if (deepgramSocket) {
           if (deepgramSocket.readyState === WebSocket.OPEN) deepgramSocket.close();
@@ -1045,12 +1019,9 @@
         }
 
         isRecording = false;
-        interimTranscript = '';
-        updateTranscript();
         
         if (conversationActive) {
-          talkLabel.textContent = 'TIENI PREMUTO PER PARLARE';
-          updateStatus('Tieni premuto il microfono', 'active');
+          talkLabel.textContent = 'Tieni premuto per parlare';
         }
       }
 
@@ -1079,7 +1050,6 @@
           processor.connect(audioContext.destination);
           
         } catch (error) {
-          updateStatus('Errore audio', 'error');
           stopRecording();
         }
       }
@@ -1104,40 +1074,19 @@
         }
       });
 
-      // ========== TRANSCRIPT ==========
-      function updateTranscript() {
-        transcriptDiv.innerHTML = finalTranscript + 
-          (interimTranscript ? '<span class="interim">' + interimTranscript + '</span>' : '');
-        transcriptDiv.scrollTop = transcriptDiv.scrollHeight;
-      }
-
       // ========== UTILITY ==========
-      function updateStatus(message, type = 'idle') {
-        statusDiv.textContent = message;
-        statusDiv.className = 'status-bar ' + type;
-      }
-
       function handleError(error) {
-        let msg = 'Errore';
-        if (error.name === 'NotAllowedError') msg = 'Permesso microfono negato';
-        else if (error.name === 'NotFoundError') msg = 'Microfono non trovato';
-        else if (error.name === 'NotReadableError') msg = 'Microfono in uso';
-        else if (error.message) msg = error.message;
-        
-        updateStatus(msg, 'error');
+        console.error('Error:', error);
         stopRecording();
       }
 
       function handleDisconnection() {
         stopRecording();
-        updateStatus('Disconnesso', 'error');
-        statusDot.className = 'status-dot error';
-        
         setTimeout(() => returnToLanding(), 1500);
       }
 
       function returnToLanding() {
-        mainApp.classList.add('hidden');
+        speakingPage.classList.add('hidden');
         landingPage.classList.remove('hidden');
         
         userState = 'disconnected';
@@ -1145,17 +1094,11 @@
         isRecording = false;
         userId = null;
         queuePosition = null;
-        finalTranscript = '';
-        interimTranscript = '';
         
         usernameInput.value = '';
         connectBtn.disabled = true;
-        startConvBtn.disabled = true;
-        endConvBtn.disabled = true;
         talkBtn.disabled = true;
         queueOverlay.classList.remove('visible');
-        transcriptDiv.innerHTML = '';
-        updateStatus('Disconnesso', 'idle');
       }
 
       // ========== CLEANUP ==========
