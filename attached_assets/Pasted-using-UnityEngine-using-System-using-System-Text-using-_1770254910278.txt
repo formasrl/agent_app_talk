@@ -1,0 +1,236 @@
+using UnityEngine;
+using System;
+using System.Text;
+using NativeWebSocket;
+using Convai.Scripts.Runtime.Core;
+
+public class UnityWebSocketClient : MonoBehaviour
+{
+    [Header("Server Settings")]
+    public string serverUrl = "wss://8a077dbf-2b2f-44d8-ab5d-2c3e4037a8a2-00-19ua2qbagz2r0.spock.replit.dev";
+    public bool autoConnect = true;
+    public float reconnectDelay = 3f;
+
+    [Header("Convai Integration")]
+    [Tooltip("Reference to the ConvaiNPC to send transcriptions to")]
+    public ConvaiNPC convaiNPC;
+
+    [Tooltip("Only send final transcriptions (ignore interim)")]
+    public bool onlySendFinal = true;
+
+    private WebSocket webSocket;
+    private bool isConnected = false;
+    private bool shouldReconnect = true;
+
+    [System.Serializable]
+    public class TranscriptionData
+    {
+        public string text;
+        public bool isFinal;
+        public string timestamp;
+    }
+
+    [System.Serializable]
+    public class IdentifyMessage
+    {
+        public string type = "identify";
+        public string client = "unity";
+    }
+
+    [System.Serializable]
+    public class NewUserMessage
+    {
+        public string type;
+        public string timestamp;
+    }
+
+    async void Start()
+    {
+        // Bypass SSL certificate validation (ONLY FOR TESTING)
+        System.Net.ServicePointManager.ServerCertificateValidationCallback =
+            (sender, certificate, chain, sslPolicyErrors) => true;
+
+        if (autoConnect)
+        {
+            await ConnectToServer();
+        }
+    }
+
+    public async System.Threading.Tasks.Task ConnectToServer()
+    {
+        if (isConnected) return;
+
+        try
+        {
+            UnityEngine.Debug.Log($"Connecting to {serverUrl}...");
+
+            webSocket = new WebSocket(serverUrl);
+
+            webSocket.OnOpen += () =>
+            {
+                isConnected = true;
+                UnityEngine.Debug.Log("Connected to relay server!");
+                SendIdentification();
+            };
+
+            webSocket.OnMessage += (bytes) =>
+            {
+                string message = Encoding.UTF8.GetString(bytes);
+                ProcessMessage(message);
+            };
+
+            webSocket.OnError += (error) =>
+            {
+                UnityEngine.Debug.LogError($"WebSocket Error: {error}");
+            };
+
+            webSocket.OnClose += async (closeCode) =>
+            {
+                isConnected = false;
+                UnityEngine.Debug.Log($"Connection closed: {closeCode}");
+
+                if (shouldReconnect && UnityEngine.Application.isPlaying)
+                {
+                    await System.Threading.Tasks.Task.Delay((int)(reconnectDelay * 1000));
+                    await ConnectToServer();
+                }
+            };
+
+            await webSocket.Connect();
+        }
+        catch (Exception e)
+        {
+            UnityEngine.Debug.LogError($"Connection failed: {e.Message}");
+            isConnected = false;
+
+            if (shouldReconnect)
+            {
+                await System.Threading.Tasks.Task.Delay((int)(reconnectDelay * 1000));
+                await ConnectToServer();
+            }
+        }
+    }
+
+    async void SendIdentification()
+    {
+        try
+        {
+            IdentifyMessage identify = new IdentifyMessage();
+            string json = JsonUtility.ToJson(identify);
+
+            if (webSocket.State == WebSocketState.Open)
+            {
+                await webSocket.SendText(json);
+                UnityEngine.Debug.Log("Sent Unity identification");
+            }
+        }
+        catch (Exception e)
+        {
+            UnityEngine.Debug.LogError($"Failed to send identification: {e.Message}");
+        }
+    }
+
+    void ProcessMessage(string jsonMessage)
+    {
+        try
+        {
+            // Check if it's a new user connection notification
+            var newUserMsg = JsonUtility.FromJson<NewUserMessage>(jsonMessage);
+
+            if (newUserMsg != null && newUserMsg.type == "new_user_connected")
+            {
+                OnNewUserConnected(newUserMsg.timestamp);
+                return;
+            }
+
+            // Otherwise, try to parse as transcription data
+            TranscriptionData data = JsonUtility.FromJson<TranscriptionData>(jsonMessage);
+
+            if (data != null && !string.IsNullOrEmpty(data.text))
+            {
+                // Log to console
+                if (data.isFinal)
+                {
+                    UnityEngine.Debug.Log($"<color=green>[FINAL]</color> {data.text}");
+                }
+                else
+                {
+                    UnityEngine.Debug.Log($"<color=yellow>[INTERIM]</color> {data.text}");
+                }
+
+                // Send to Convai
+                SendToConvai(data);
+            }
+        }
+        catch (Exception e)
+        {
+            UnityEngine.Debug.LogError($"Error parsing message: {e.Message}");
+        }
+    }
+
+    // ⭐ Called when a new web user connects
+    void OnNewUserConnected(string timestamp)
+    {
+        UnityEngine.Debug.Log($"<color=cyan> NEW USER CONNECTED at {timestamp}</color>");
+
+    }
+
+    void SendToConvai(TranscriptionData data)
+    {
+        // Check if ConvaiNPC is assigned
+        if (convaiNPC == null)
+        {
+            UnityEngine.Debug.LogWarning("ConvaiNPC not assigned! Cannot send transcription to Convai.");
+            return;
+        }
+
+        // Only send if it's final or if we want to send interim too
+        if (data.isFinal || !onlySendFinal)
+        {
+            UnityEngine.Debug.Log($"<color=cyan>Sending to Convai:</color> {data.text}");
+            convaiNPC.SendTextDataAsync(data.text);
+        }
+    }
+
+    void Update()
+    {
+        // IMPORTANT: Dispatch messages on main thread
+#if !UNITY_WEBGL || UNITY_EDITOR
+        if (webSocket != null)
+        {
+            webSocket.DispatchMessageQueue();
+        }
+#endif
+    }
+
+    async void OnApplicationQuit()
+    {
+        shouldReconnect = false;
+        await Disconnect();
+    }
+
+    public async System.Threading.Tasks.Task Disconnect()
+    {
+        shouldReconnect = false;
+
+        if (webSocket != null && webSocket.State == WebSocketState.Open)
+        {
+            try
+            {
+                await webSocket.Close();
+            }
+            catch (Exception e)
+            {
+                UnityEngine.Debug.LogError($"Error closing connection: {e.Message}");
+            }
+        }
+
+        isConnected = false;
+        UnityEngine.Debug.Log("WebSocket disconnected");
+    }
+
+    public bool IsConnected()
+    {
+        return isConnected && webSocket != null && webSocket.State == WebSocketState.Open;
+    }
+}

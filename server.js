@@ -29,6 +29,12 @@ app.get('/status', (req, res) => {
   });
 });
 
+// Simple ping endpoint for Unity to test HTTP connectivity
+app.get('/ping', (req, res) => {
+  console.log('🏓 Ping received from:', req.ip);
+  res.send('pong');
+});
+
 // Create HTTP server with Express
 const server = require('http').createServer(app);
 
@@ -45,7 +51,14 @@ let userIdCounter = 0;
 
 // ========== WEBSOCKET CONNECTION ==========
 wss.on('connection', (ws, req) => {
-  console.log('New connection from:', req.socket.remoteAddress);
+  const origin = req.headers.origin || 'unknown';
+  const userAgent = req.headers['user-agent'] || 'unknown';
+  console.log('═══════════════════════════════════════════════════════');
+  console.log('🔌 New WebSocket connection:');
+  console.log('   IP:', req.socket.remoteAddress);
+  console.log('   Origin:', origin);
+  console.log('   User-Agent:', userAgent.substring(0, 50));
+  console.log('═══════════════════════════════════════════════════════');
   
   let clientType = null;
   let userId = null;
